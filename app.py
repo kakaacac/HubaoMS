@@ -1,45 +1,44 @@
 # -*- coding: utf-8 -*-
 import logging
 from flask import Flask
-from flask_admin import Admin
 
-from views.user import UserView, FeedbackView, TaskView, AccountManagementView
-from views.auth import AuthView
-from views.compere import CompereView
-from config import *
-from models import db, AppUser, Feedback, Compere
+from config import USER, PASSWORD, HOST, PORT, DATABASE, SOCKET_TIMEOUT, REDIS_SETTINGS, REDIS_SENTINELS
+from models import db
 from utils.login_manager import login_manager
+from utils.RedisPool import redis, integrated_redis
+from manage import admin, api
+from utils.scheduler import init_scheduler
 
-logger = logging.getLogger('werkzeug')
-logger.setLevel(logging.ERROR)
+logging.basicConfig(level=logging.ERROR)
 
 app = Flask(__name__)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://{un}:{pw}@{h}:{p}/{db}".format(
     un=USER, pw=PASSWORD, h=HOST, p=PORT, db=DATABASE
 )
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config["SOCKET_TIMEOUT"] = SOCKET_TIMEOUT
+app.config["REDIS_SENTINELS"] = REDIS_SENTINELS
+app.config["REDIS_SETTINGS"] = REDIS_SETTINGS
 
 app.secret_key = "test"
 
+# Start a schedule to execute or eliminate uncompleted jobs
+init_scheduler()
 
 db.init_app(app)
 login_manager.init_app(app)
-
-admin = Admin(app, name="Hubao TV", template_mode="bootstrap3")
-
-# Auth
-admin.add_view(AuthView(name="Login", url='/auth'))
-
-# User
-admin.add_view(UserView(name="User", category='User', endpoint='user', session=db.session, model=AppUser))
-admin.add_view(FeedbackView(name="Feedback", endpoint='feedback', category='User', session=db.session, model=Feedback))
-admin.add_view(TaskView(name="Task", category='User', endpoint='task'))
-admin.add_view(AccountManagementView(name="Account", category="User", endpoint="account", session=db.session, model=AppUser))
-
-# Compere
-admin.add_view(CompereView(name="Compere", category="Compere", endpoint="compere", session=db.session, model=Compere))
+redis.init_app(app)
+admin.init_app(app)
+api.init_app(app)
+integrated_redis.init_app(app)
 
 if __name__ == '__main__':
-    app.run(debug=True)
-    # import json
-    # print json.dump(json.load(open("task_backup.json")), open("task.txt", 'w'), indent=2)
+    app.run(debug=True, use_reloader=False)
+    # from apscheduler.schedulers.background import BackgroundScheduler
+    # from datetime import datetime, timedelta
+    # scheduler = BackgroundScheduler()
+    # def hello():
+    #     with open(r"E:\hubao\HubaoMS\test.txt" "a") as f:
+    #         f.write(datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    # scheduler.add_job(hello, 'interval', seconds=10)
+    # scheduler.start()

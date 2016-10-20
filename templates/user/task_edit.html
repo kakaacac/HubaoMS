@@ -1,59 +1,62 @@
 {% extends 'admin/master.html' %}
 {% block body %}
-    <form method="POST" action="{{ action }}" id="edit_form">
+<h2 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif,'Microsoft Yahei','微软雅黑'">{{ title }}</h2><hr>
+<form method="POST" action="{{ action }}" id="edit_form">
         {{ form.hidden_tag() }}
         {{ form.hidden }}
 
-        <div class="form-group">
+    <div class="form-group">
         {{ form.task_name.label }}
-        {{ form.task_name(class="form-control") }}</div>
+        {{ form.task_name(class="form-control") }}
+    </div>
 
-        <div class="form-group">
+    <div class="form-group">
         {{ form.task_desc.label }}
-        {{ form.task_desc(class="form-control") }}</div>
+        {{ form.task_desc(class="form-control") }}
+    </div>
 
         {{ form.award_type.label }}
-        <div class="row">
-            <div class="col-xs-4">
-                <div class="form-group">{{ form.award_type(class="form-control") }}</div>
-            </div>
-            <div class="col-xs-4">
-                <div class="form-group"><select class="form-control" id="award_currency" name="award_currency"></select></div>
-            </div>
-            <div class="col-xs-4">
-                <div class="form-group">{{ form.award_amount(class="form-control") }}</div>
-            </div>
+    <div class="row">
+        <div class="col-xs-4">
+            <div class="form-group">{{ form.award_type(class="form-control") }}</div>
         </div>
-
-        <div class="form-group">
-            <label>图片地址</label>
-            <p class="form-control-static" id="img_url">{{ form.img_url }}</p>
+        <div class="col-xs-4">
+            <div class="form-group"><select class="form-control" id="award_currency" name="award_currency"></select></div>
         </div>
-
-        <div class="form-group">
-            <label>选择图片</label>
-            {{ form.img }}
+        <div class="col-xs-4">
+            <div class="form-group">{{ form.award_amount(class="form-control") }}</div>
         </div>
+    </div>
 
-        <div class="form-group" style="display:inline-block">
-            <button class="btn btn-primary btn-sm" id="upload_btn" type="button" disabled>上传图片</button>
-            <div class="text-danger" id="upload_msg" style="float:right; margin-left: 20px;"></div>
-        </div>
-        <p class="help-block">{{ form.help_msg }}</p>
+    <div class="form-group">
+        {{ form.img_url.label }}
+        {{ form.img_url(class="form-control", id="img_url") }}
+    </div>
 
-        <div class="form-group">
+    <div class="form-group">
+        <label>选择图片</label>
+        {{ form.img }}
+    </div>
+
+    <div class="form-group" style="display:inline-block">
+        <button class="btn btn-primary btn-sm" id="upload_btn" type="button" disabled>上传图片</button>
+        <div class="text-danger" id="upload_msg" style="float:right; margin-left: 20px;"></div>
+    </div>
+    <p class="help-block">{{ form.help_msg }}</p><br>
+
+    <div class="form-group">
         {{ form.display.label }}
         {{ form.display(class="form-control") }}
-        </div>
+    </div>
 
-        <div class="form-group">
+    <div class="form-group">
         {{ form.task_type.label }}
         {{ form.task_type(class="form-control") }}
-        </div>
+    </div>
 
         {{ form.save(class="btn btn-primary") }}
-        <a href="{{ url_for('.task_list') }}">{{ form.cancel(class="btn btn-default", type="button") }}</a>
-    </form>
+    <a href="{{ cancel }}">{{ form.cancel(class="btn btn-default", type="button") }}</a>
+</form>
 {% endblock %}
 {% block tail_js %}
 {{ super() }}
@@ -80,15 +83,14 @@
         $('#award_currency').find('option').remove();
         show_currency();
     })
-</script>
-<script>
+
     $('#upload_btn').on('click', function(){
         var data = new FormData();
         var img = $('#img').prop('files')[0];
         data.append('img', img);
 
         $.ajax({
-            url: "{{ url_for('.image_upload') }}",
+            url: "{{ url_for('image_upload') }}",
             type: 'POST',
             data: data,
             processData: false,
@@ -96,7 +98,7 @@
             dataType: 'json',
             success: function(response){
                 $('#upload_msg').empty();
-                $('#img_url').text(response.img_url);
+                $('#img_url').val(response.img_url);
             },
             error: function(response){
                 $('#upload_msg').text('* ' + response.responseText);
@@ -104,19 +106,8 @@
         });
     });
 
-</script>
-<script>
     $('#img').on('change', function(){
         $('#upload_btn').prop('disabled', ($('#img').val() == ''));
     })
-
-    $('#edit_form').submit(function(e){
-        $('<input>').attr('type', 'hidden')
-        .attr('name', "img_url")
-        .attr('id', "img_url")
-        .attr('value', $('#img_url').text())
-        .appendTo('#edit_form');
-        return true;
-    });
 </script>
 {% endblock %}

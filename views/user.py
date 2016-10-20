@@ -1,22 +1,26 @@
 # -*- coding: utf-8 -*-
 import json
-import hashlib
-import os
-from PIL import Image
-from datetime import datetime
+import time
+import requests
+from datetime import datetime, timedelta
+from math import ceil
 from sqlalchemy.sql import func
-from flask import flash, redirect, url_for, request, jsonify, make_response
+from flask import flash, redirect, url_for, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
+from apscheduler.schedulers.background import BackgroundScheduler
 
-from forms import TaskEditForm
+from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
-from utils.formatter import format_thumbnail, format_account_action,\
-    format_room_action, format_room_status, format_user_action, prop_name, prop_type, format_value, ts_to_time
-from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment
-from config import IMAGE_DIR, IMAGE_BASE_PATH, TASK_CONFIG, PAGE_SIZE
-
+from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
+    format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status
+from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room
+from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN
+from utils.functions import is_file_exists, hash_md5
+from utils.RedisPool import redis
+from utils.scheduler import db_jobstore
+from utils.NetEase import netease
 
 class UserView(ModelView):
     can_create = False
@@ -49,7 +53,7 @@ class UserView(ModelView):
                          "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S"),
                          "actions": format_user_action}
 
-    list_template = "user/user_view.html"
+    list_template = "thumbnail_list.html"
 
     def is_accessible(self):
         return current_user.is_authenticated
@@ -66,7 +70,7 @@ class UserView(ModelView):
             "uid": uid,
             "data": records.items,
             "prop_name": prop_name,
-            "format_value": format_value,
+            "format_value": format_present_value,
             "prop_type": prop_type,
             "num_pages": records.pages,
             "page": page - 1,
@@ -195,7 +199,6 @@ class TaskView(BaseView):
         with open(TASK_CONFIG) as f:
             self.tasks = json.load(f)
 
-        self.allowed_extensions = ('gif', 'jpg', 'jpeg', 'png', 'tiff')
         self.vc_options = [("vfc", u"二级货币"), ("vcy", u"一级货币")]
         self.prop_options = [
             ("1", u"小草"),
@@ -208,23 +211,6 @@ class TaskView(BaseView):
 
     def is_accessible(self):
         return current_user.is_authenticated
-
-    def is_file_allowed(self, filename):
-        if not self.allowed_extensions:
-            return True
-
-        return ('.' in filename and
-                filename.rsplit('.', 1)[1].lower() in
-                map(lambda x: x.lower(), self.allowed_extensions))
-
-    @staticmethod
-    def is_file_exists(file_url):
-        if not file_url:
-            return False
-        path = file_url.replace(IMAGE_BASE_PATH, "", 1).replace("/", os.sep)
-        if path.startswith(os.sep):
-            path = path[1:]
-        return os.path.exists(os.path.join(IMAGE_DIR, path))
 
     @expose('/')
     def task_list(self):
@@ -248,15 +234,20 @@ class TaskView(BaseView):
         form.task_desc.data = task["task_desc"]
         form.award_type.data = award_info[0]
         form.award_amount.data = award_info[2]
-        form.img_url = task["img"]
+        form.img_url.data = task["img"]
         form.display.data = task["display"]
         form.task_type.data = task["task_type"].lower()
-        form.help_msg = u"仅支持 gif, jpg, jpeg, png, tiff 格式"
 
         vc_str = json.dumps(self.vc_options, ensure_ascii=False)
         prop_str = json.dumps(self.prop_options, ensure_ascii=False)
 
-        return self.render("user/task_edit.html", form=form, action=url_for('.edit_task', task_id=task_id), vc_options=vc_str, prop_options=prop_str)
+        return self.render("user/task_edit.html",
+                           form=form,
+                           action=url_for('.edit_task', task_id=task_id),
+                           vc_options=vc_str,
+                           prop_options=prop_str,
+                           cancel=url_for('.task_list'),
+                           title=u'修改任务')
 
     @expose('/edit/<task_id>', methods=["POST",])
     def edit_task(self, task_id):
@@ -265,9 +256,7 @@ class TaskView(BaseView):
             flash(u"缺少关键信息", category="error")
             return redirect(url_for('.task_edit_view', task_id=task_id))
 
-        form_data = request.form
-
-        if not self.is_file_exists(form_data["img_url"]):
+        if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
             return redirect(url_for('.task_edit_view', task_id=task_id))
 
@@ -275,12 +264,14 @@ class TaskView(BaseView):
             task_info = json.load(f)
             for task in task_info:
                 if task.get("task_id") == task_id:
-                    task["task"] = form_data["task_name"]
-                    task["img"] = form_data["img_url"]
-                    task["task_type"] = form_data["task_type"]
-                    task["task_desc"] = form_data["task_desc"]
-                    task["display"] = form_data["display"]
-                    task["prize"] = ":".join([form_data["award_type"], form_data["award_currency"], form_data["award_amount"]])
+                    task["task"] = form.task_name.data
+                    task["img"] = form.img_url.data
+                    task["task_type"] = form.task_type.data
+                    task["task_desc"] = form.task_desc.data
+                    task["display"] = form.display.data
+                    task["prize"] = ":".join([form.award_type.data,
+                                              request.form["award_currency"],
+                                              "{:4f}".format(form.award_amount.data).rstrip('0').rstrip('.')])
                     break
 
         with open(TASK_CONFIG, 'w') as f:
@@ -297,7 +288,13 @@ class TaskView(BaseView):
         vc_str = json.dumps(self.vc_options, ensure_ascii=False)
         prop_str = json.dumps(self.prop_options, ensure_ascii=False)
 
-        return self.render("user/task_edit.html", form=form, action=url_for('.create_task'), vc_options=vc_str, prop_options=prop_str)
+        return self.render("user/task_edit.html",
+                           form=form,
+                           action=url_for('.create_task'),
+                           vc_options=vc_str,
+                           prop_options=prop_str,
+                           cancel=url_for('.task_list'),
+                           title=u'添加任务')
 
     @expose('/create', methods=('POST',))
     def create_task(self):
@@ -306,9 +303,7 @@ class TaskView(BaseView):
             flash(u"信息有误或缺失", category="error")
             return redirect(url_for('.create_task_view'))
 
-        form_data = request.form
-
-        if not self.is_file_exists(form_data["img_url"]):
+        if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
             return redirect(url_for('.create_task_view'))
 
@@ -317,13 +312,15 @@ class TaskView(BaseView):
 
             task_info.append(
                 {
-                    "task_type": form_data["task_type"],
+                    "task_type": form.task_type.data,
                     "task_id": str(len(task_info) + 1),
-                    "img": form_data["img_url"],
-                    "task": form_data["task_name"],
-                    "task_desc": form_data["task_desc"],
-                    "display": form_data["display"],
-                    "prize": ":".join([form_data["award_type"], form_data["award_currency"], form_data["award_amount"]])
+                    "img": form.img_url.data,
+                    "task": form.task_name.data,
+                    "task_desc": form.task_desc.data,
+                    "display": form.display.data,
+                    "prize": ":".join([form.award_type.data,
+                                       request.form["award_currency"],
+                                       "{:4f}".format(form.award_amount.data).rstrip('0').rstrip('.')])
                 }
             )
 
@@ -352,41 +349,31 @@ class TaskView(BaseView):
         flash(u"删除成功", category="info")
         return redirect(url_for(".task_list"))
 
-    @expose('/image/upload', methods=['POST',])
-    def image_upload(self):
-        img = request.files.get("img")
-        if img is not None:
-            if self.is_file_allowed(img.filename):
-                try:
-                    image = Image.open(img)
-                except Exception:
-                    return make_response(u"错误文件格式", 400)
 
-                img_format = image.format.lower()
-                if img_format in self.allowed_extensions:
-                    imgbyte = image.tobytes()
+def unblock_account_job(uid):
+    print "unblock_acct {} {}".format(uid, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
+    # To avoid circular import, should be improved later
+    from app import app
+    with app.app_context():
+        user = AppUser.query.get(uid)
+        if user.locked:
+            user.locked = False
+            db.session.commit()
+            redis.master().hdel("control:block:account", user.uuid.replace("-", ""))
 
-                    md5 = hashlib.md5()
-                    md5.update(imgbyte)
-                    hash_str = md5.hexdigest()
 
-                    path = os.path.join(IMAGE_DIR, hash_str[:4], hash_str[4:8])
-                    img_path = os.path.join(path, hash_str[8:] + '.' + img_format)
-                    if not os.path.exists(path):
-                        os.makedirs(path)
-
-                    image.save(img_path)
-                else:
-                    return make_response(u"文件格式错误", 400)
-            else:
-                return make_response(u"文件格式错误", 400)
-        else:
-            return make_response(u"文件不能为空", 400)
-
-        return make_response(
-            jsonify(
-                {"img_url": "/".join([IMAGE_BASE_PATH, hash_str[:4], hash_str[4:8], hash_str[8:] + '.' + img_format])}
-            ), 200)
+def unblock_room_job(rid):
+    # To avoid circular import, should be improved later
+    from app import app
+    with app.app_context():
+        room = Room.query.get(rid)
+        if not room.enable:
+            #restore video stream
+            AccountManagementView.control_video_stream(room.rid, room.user.uuid, action=1)
+            room.enable = True
+            room.control_flag = 0
+            db.session.commit()
+            redis.master().hdel("control:block:room", rid)
 
 
 class AccountManagementView(ModelView):
@@ -414,57 +401,330 @@ class AccountManagementView(ModelView):
         "display_name": u"用户昵称"
     }
     column_formatters = {
-        "locked": lambda v, c, m, n: colorize(u"封停", "red") if m.locked else colorize(u"正常", "green"),
+        "locked": format_account_status,
         "locked_time": lambda v, c, m, n: m.locked_time.strftime("%Y-%m-%d %H:%M:%S") if m.locked_time else None,
         "room.control_flag": format_room_status,
         "room.disable_time": lambda v, c, m, n: m.room.disable_time.strftime("%Y-%m-%d %H:%M:%S") if m.room and m.room.disable_time else None,
         "acc_action": format_account_action,
         "room_action": format_room_action
     }
+    list_template = "user/account_management.html"
 
     def is_accessible(self):
         return current_user.is_authenticated
 
-    # TODO: send YX message
+    # Override index_view function
+    @expose('/')
+    def index_view(self):
+        """
+            List view
+        """
+        if self.can_delete:
+            delete_form = self.delete_form()
+        else:
+            delete_form = None
+
+        # Grab parameters from URL
+        view_args = self._get_list_extra_args()
+
+        # Map column index to column name
+        sort_column = self._get_column_by_idx(view_args.sort)
+        if sort_column is not None:
+            sort_column = sort_column[0]
+
+        # Get count and data
+        count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
+                                    view_args.search, view_args.filters)
+
+        list_forms = {}
+        if self.column_editable_list:
+            for row in data:
+                list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
+
+        # Calculate number of pages
+        if count is not None and self.page_size:
+            num_pages = int(ceil(count / float(self.page_size)))
+        elif not self.page_size:
+            num_pages = 0  # hide pager for unlimited page_size
+        else:
+            num_pages = None  # use simple pager
+
+        # Various URL generation helpers
+        def pager_url(p):
+            # Do not add page number if it is first page
+            if p == 0:
+                p = None
+
+            return self._get_list_url(view_args.clone(page=p))
+
+        def sort_url(column, invert=False):
+            desc = None
+
+            if invert and not view_args.sort_desc:
+                desc = 1
+
+            return self._get_list_url(view_args.clone(sort=column, sort_desc=desc))
+
+        # Actions
+        actions, actions_confirmation = self.get_actions_list()
+
+        clear_search_url = self._get_list_url(view_args.clone(page=0,
+                                                              sort=view_args.sort,
+                                                              sort_desc=view_args.sort_desc,
+                                                              search=None,
+                                                              filters=None))
+
+        # Interaction form
+        form = DateSelectForm()
+
+        return self.render(
+            account_form=form,
+            room_form=form,
+
+            template=self.list_template,
+            data=data,
+            list_forms=list_forms,
+            delete_form=delete_form,
+
+            # List
+            list_columns=self._list_columns,
+            sortable_columns=self._sortable_columns,
+            editable_columns=self.column_editable_list,
+            list_row_actions=self.get_list_row_actions(),
+
+            # Pagination
+            count=count,
+            pager_url=pager_url,
+            num_pages=num_pages,
+            page=view_args.page,
+            page_size=self.page_size,
+
+            # Sorting
+            sort_column=view_args.sort,
+            sort_desc=view_args.sort_desc,
+            sort_url=sort_url,
+
+            # Search
+            search_supported=self._search_supported,
+            clear_search_url=clear_search_url,
+            search=view_args.search,
+
+            # Filters
+            filters=self._filters,
+            filter_groups=self._get_filter_groups(),
+            active_filters=view_args.filters,
+
+            # Actions
+            actions=actions,
+            actions_confirmation=actions_confirmation,
+
+            # Misc
+            enumerate=enumerate,
+            get_pk_value=self.get_pk_value,
+            get_value=self.get_list_value,
+            return_url=self._get_list_url(view_args),
+        )
+
     @expose("/block/<uid>")
     def block_account(self, uid):
         user = AppUser.query.get(uid)
-        user.locked = True
-        user.locked_time = datetime.now()
-        db.session.commit()
-        flash(u"封停成功", category="warning")
-        return redirect(url_for("account.index_view"))
+        if user.locked:
+            flash(u"用户已被封禁", category="info")
+            return redirect(url_for("account.index_view"))
+        else:
+            user.locked = True
+            user.locked_time = datetime.now()
+            db.session.commit()
+            flash(u"封停成功", category="warning")
+            return redirect(url_for("account.index_view"))
 
     @expose("/unblock/<uid>")
     def unblock_account(self, uid):
         user = AppUser.query.get(uid)
-        user.locked = False
-        db.session.commit()
-        flash(u"解封成功", category="info")
-        return redirect(url_for("account.index_view"))
+        if user.locked:
+            user.locked = False
+            db.session.commit()
+            redis.master().hdel("control:block:account", user.uuid.replace("-", ""))
+            flash(u"解封成功", category="info")
+            return redirect(url_for("account.index_view"))
+        else:
+            flash(u"用户未被封禁", category="info")
+            return redirect(url_for("account.index_view"))
 
-    @expose("/room/suspend/<uid>")
-    def suspend_room(self, uid):
-        user = AppUser.query.get(uid)
-        user.room.control_flag = 1
-        db.session.commit()
-        flash(u"勒令整改成功", category="warning")
-        return redirect(url_for("account.index_view"))
+    @expose("/suspend_room/<rid>")
+    def suspend_room(self, rid):
+        room = Room.query.get(rid)
+        if room.enable:
+            room_id = room.rid
+            end_time = int(time.time()) + 300
 
-    @expose("/room/block/<uid>")
-    def block_room(self, uid):
-        user = AppUser.query.get(uid)
-        user.room.enable = False
-        user.room.control_flag = 0
-        user.room.disable_time = datetime.now()
-        db.session.commit()
-        flash(u"封停成功", category="warning")
-        return redirect(url_for("account.index_view"))
+            zadd = redis.master().zadd("expires:room.ctrl.1", end_time, room_id)
 
-    @expose("/room/unblock/<uid>")
-    def unblock_room(self, uid):
+            rec_key = "control:rectification." + datetime.today().strftime("%Y-%m-%d")
+            rec_num = redis.master().hincrby(rec_key, room_id, 1)
+            if rec_num == 1:
+                redis.master().expireat(rec_key, int(time.mktime((datetime.now() + timedelta(days=1)).timetuple())))
+
+            if rec_num >= 10:
+                return self.block_room(rid)
+
+            # send NetEase message
+            net = self.send_block_room_msg(room.chatroom, 1)
+
+            room.control_flag = 1
+            db.session.commit()
+
+            if zadd and rec_num and net:
+                flash(u"勒令整改成功", category="warning")
+            else:
+                flash(u"操作失败", category="error")
+            return redirect(url_for("account.index_view"))
+        else:
+            flash(u"房间已被封停", category="info")
+            return redirect(url_for("account.index_view"))
+
+    @expose("/block_room/<rid>")
+    def block_room(self, rid):
+        room = Room.query.get(rid)
+        if room.enable:
+            # send NetEase message
+            self.send_block_room_msg(room.chatroom, 2)
+
+            #cut off video stream
+            self.control_video_stream(rid, room.user.uuid)
+
+            if room.control_flag == 1:
+                redis.master().zrem("expires:room.ctrl.1", rid)
+
+            room.enable = False
+            room.control_flag = 2
+            room.disable_time = datetime.now()
+            db.session.commit()
+            flash(u"封停成功", category="warning")
+            return redirect(url_for("account.index_view"))
+        else:
+            flash(u"房间已被封停", category="info")
+            return redirect(url_for("account.index_view"))
+
+    @expose("/unblock_room/<rid>")
+    def unblock_room(self, rid):
+        room = Room.query.get(rid)
+        if room.enable:
+            flash(u"房间未被封停", category="info")
+            return redirect(url_for("account.index_view"))
+        else:
+            #restore video stream
+            self.control_video_stream(room.rid, room.user.uuid, action=1)
+
+            room.enable = True
+            room.control_flag = 0
+            db.session.commit()
+            redis.master().hdel("control:block:room", rid)
+            flash(u"解封成功", category="info")
+            return redirect(url_for("account.index_view"))
+
+    @expose("/temporary_block/<uid>", methods=['POST',])
+    def temporary_block_account(self, uid):
         user = AppUser.query.get(uid)
-        user.room.enable = True
-        db.session.commit()
-        flash(u"解封成功", category="info")
-        return redirect(url_for("account.index_view"))
+        if user.locked:
+            flash(u"用户已被封禁", category="info")
+            return redirect(url_for("account.index_view"))
+        else:
+            form = DateSelectForm()
+            if form.validate_on_submit():
+                block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
+                expired_time = datetime.now() + timedelta(seconds=block_time)
+
+                # Store expiration info at redis
+                redis.master().hset("control:block:account",
+                                    user.uuid.replace("-", ""),
+                                    expired_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+
+                # Add scheduler job for unblock
+                scheduler = BackgroundScheduler()
+                from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
+                from config import DB_URL
+                scheduler.add_jobstore(db_jobstore, alias="sqlalchemy")
+                scheduler.add_jobstore(SQLAlchemyJobStore(DB_URL))
+                scheduler.add_job(unblock_account_job, 'date', args=(uid,), coalesce=True, misfire_grace_time=86400,
+                                  id="block_account_{}".format(uid), run_date=expired_time)
+                scheduler.start()
+
+                user.locked = True
+                user.locked_time = datetime.now()
+                db.session.commit()
+
+                flash(u"封停成功", category="warning")
+                return redirect(url_for("account.index_view"))
+            else:
+                flash(u"数据输入有误，操作失败", category="error")
+                return redirect(url_for("account.index_view"))
+
+    @expose("/temporary_block_room/<rid>", methods=['POST',])
+    def temporary_block_room(self, rid):
+        room = Room.query.get(rid)
+        if room.enable:
+            form = DateSelectForm()
+            if form.validate_on_submit():
+                block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
+                expired_time = datetime.now() + timedelta(seconds=block_time)
+
+                #cut off video stream
+                self.control_video_stream(rid, room.user.uuid)
+
+                if room.control_flag == 1:
+                    redis.master().zrem("expires:room.ctrl.1", rid)
+
+                room.enable = False
+                room.control_flag = 2
+                room.disable_time = datetime.now()
+                db.session.commit()
+
+                # send NetEase message
+                self.send_block_room_msg(room.chatroom, 2)
+
+                # Store expiration info at redis
+                redis.master().hset("control:block:room", rid, expired_time.strftime("%Y-%m-%d %H:%M:%S"))
+
+                # Add scheduler job for unblock
+                scheduler = BackgroundScheduler()
+                scheduler.add_jobstore(db_jobstore, alias="sqlalchemy")
+                scheduler.add_job(unblock_room_job, 'date', args=(rid,), coalesce=True, misfire_grace_time=86400,
+                                  id="block_room_{}".format(rid), run_date=expired_time)
+                scheduler.start()
+
+                flash(u"封停成功", category="warning")
+                return redirect(url_for("account.index_view"))
+            else:
+                flash(u"数据输入有误，操作失败", category="error")
+                return redirect(url_for("account.index_view"))
+        else:
+            flash(u"房间已被封停", category="info")
+            return redirect(url_for("account.index_view"))
+
+    @staticmethod
+    def send_block_room_msg(chatroom_id, status):
+        ext = {
+            "action": "3003",
+            "data": {"control_flag": str(status)}
+        }
+        response = netease.send_to_chatroom(chatroom_id, 100, ext=ext)
+        return json.loads(response.content)["code"] == 200
+
+    @staticmethod
+    def control_video_stream(room_id, uuid, action=0, description=''):
+        user_id = uuid.replace("-", "")
+        password = str(int(time.time()))
+        sign = hash_md5(user_id + password + str(action) + VIDEO_API_KEY)
+
+        payload = {
+            "userid": user_id,
+            "roomid": room_id,
+            "password": password,
+            "operation": action,
+            "closeldescribe": description,
+            "sign": sign
+        }
+        return requests.get(VIDEO_API_DOMAIN, params=payload)
+

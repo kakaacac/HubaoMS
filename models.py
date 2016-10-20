@@ -101,7 +101,8 @@ class AppUser(db.Model):
     phone = db.relationship('PhoneBinding', backref='user', uselist=False)
     payment = db.relationship('Payment', backref='user')
     device = db.relationship('Device', backref='user', uselist=False)
-    # stat = db.relationship('room_statistical', backref='user', uselist=False)
+    verification = db.relationship('CompereVerification', backref='user', uselist=False)
+    withdrawal = db.relationship('WithdrawHistory', backref='user')
 
 
 class UserCertification(db.Model):
@@ -130,9 +131,16 @@ class UserProperty(db.Model):
 class Room(db.Model):
     rid = db.Column(db.Integer, primary_key=True)
     uid = db.Column(db.Integer, db.ForeignKey('users.uid'))
+    name = db.Column(db.String(256))
+    bulletin = db.Column(db.Text)
+    on_air = db.Column("is_lived", db.Boolean)
+    screenshot = db.Column(db.String(256))
     enable = db.Column(db.Boolean)
     disable_time = db.Column(db.DateTime(timezone=False))
+    created_time = db.Column(db.DateTime(timezone=False))
     control_flag = db.Column(db.Integer)
+    game_id = db.Column(db.Integer)
+    chatroom = db.Column(db.Integer)
 
 
 class Compere(db.Model):
@@ -216,6 +224,58 @@ class Payment(db.Model):
     money = db.Column(db.Float)
     product_id = db.Column(db.String(128))
     pay_type = db.Column(db.String(64))
+
+
+class CompereVerification(db.Model):
+    __tablename__ = "compere_check"
+
+    uid = db.Column(db.Integer, db.ForeignKey('users.uid'), nullable=False)
+    real_name = db.Column(db.String(128), nullable=False)
+    card_id = db.Column(db.String(128), nullable=False)
+    id_card_front = db.Column("positive", db.String(128), nullable=False)
+    status = db.Column("check_status", db.Boolean)
+    commit_time = db.Column(db.DateTime(timezone=False))
+    id_card_back = db.Column("negative", db.String(128), nullable=False)
+    phtot_in_hand = db.Column("hand", db.String(128), nullable=False)
+    bankcard_no = db.Column(db.String(128), nullable=False)
+    ccid = db.Column(db.Integer, primary_key=True)
+
+
+class Banner(db.Model):
+    __tablename__ = "roll"
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, db.ForeignKey('room.rid'))
+    room_name = db.Column("room", db.String(64))
+    image = db.Column(db.String(256))
+    compere_id = db.Column("compere_id", db.Integer, db.ForeignKey('users.uid'))
+    compere_uuid = db.Column("compereid", UUID)
+    login_name = db.Column("compere", db.String(128))
+    flag = db.Column(db.String(32))
+    position = db.Column("pos", db.Integer)
+    url = db.Column(db.String(256))
+    room = db.relationship('Room', backref='banner', uselist=False)
+    compere = db.relationship('AppUser', backref='banner', uselist=False)
+
+
+class Broadcast(db.Model):
+    id = db.Column(db.String(128), primary_key=True)
+    index_num = db.Column(db.Integer)
+    broadcast_content = db.Column(db.Text)
+    created_time = db.Column(db.DateTime(timezone=False), nullable=False)
+    start_time = db.Column(db.DateTime(timezone=False))
+    end_time = db.Column(db.DateTime(timezone=False))
+    broadcast_range = db.Column(db.String(32))
+    status = db.Column(db.Integer, nullable=False)
+    target = db.Column(db.String)
+    broadcast_interval = db.Column(db.Integer, nullable=False, default=60)
+
+
+class RoomTags(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    name = db.Column(db.String(256))
+    mode = db.Column(db.Integer)
+    weight = db.Column(db.Integer)
 
 
 if __name__ == '__main__':

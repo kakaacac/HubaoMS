@@ -1,0 +1,168 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+{% block head %}
+{{ super() }}
+{{ lib.form_css() }}
+<style>
+    body.modal-open {
+        overflow: auto;
+    }
+</style>
+{% endblock %}
+{% block body %}
+<h2 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif,'Microsoft Yahei','微软雅黑'">{{ title }}</h2><hr>
+<form method="POST" action="{{ action }}" id="edit_form">
+    {{ form.hidden_tag() }}
+    {{ form.hidden }}
+
+    <div class="form-group">
+        {{ form.content.label }}
+        {{ form.content(class="form-control") }}
+    </div>
+    <br>
+
+    <div class="row">
+        <div class="form-group col-xs-4">
+            {{ form.start_time.label }}
+            {{ form.start_time(class="form-control") }}
+        </div>
+        <div class="form-group col-xs-4">
+            {{ form.end_time.label }}
+            {{ form.end_time(class="form-control") }}
+        </div>
+        <div class="form-group col-xs-2">
+            {{ form.interval.label }}
+            <div class="input-group">
+            {{ form.interval(class="form-control") }}
+            <div class="input-group-addon">分钟</div>
+            </div>
+        </div>
+    </div>
+    <br>
+    <label>范围</label><br>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn btn-info" id="all-btn">全部</button>
+        <button type="button" class="btn btn-default" id="tag-btn" data-toggle="modal" data-target="#tag-modal">分类</button>
+        <button type="button" class="btn btn-default" id="spec-btn" data-toggle="modal" data-target="#spec-modal">指定</button>
+    </div>
+    <br><br>
+    <div class="form-group">
+        {{ form.target(class="form-control", readonly=True) }}
+    </div>
+    <br>
+    {{ form.save(class="btn btn-primary") }}
+    <a href="{{ cancel }}">{{ form.cancel(class="btn btn-default", type="button") }}</a>
+</form>
+<div class="modal fade" id="tag-modal" tabindex="-1" role="dialog" style="overflow-y:hidden;">
+    <div style="display:table;height:100%;width:100%;">
+        <div class="modal-dialog" role="document" style="display:table-cell;vertical-align: middle;">
+            <div class="modal-content" style="width:inherit;height:inherit;margin: 0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">请选择分类</h3>
+                </div>
+                <div class="modal-body">
+                    <form>
+                        <label>主播分类</label>
+                        <div class="form-group">
+                            <div id="compere-tag-select" class="form-control select2-container select2-container-multi populate"></div>
+                        </div>
+                        <div id="compere-tag-btn" class="form-group"></div>
+                        <br><hr>
+                        <div class="form-group">
+                            <button type="button" data-dismiss="modal" class="btn btn-default">取消</button>
+                            <button type="submit" id="tag-modal-save" class="btn btn-primary">确认</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal fade" id="spec-modal" tabindex="-1" role="dialog" style="overflow-y:hidden;">
+    <div style="display:table;height:100%;width:100%;">
+        <div class="modal-dialog" role="document" style="display:table-cell;vertical-align: middle;">
+            <div class="modal-content" style="width:inherit;height:inherit;margin: 0 auto;">
+                <div class="modal-header">
+                    <button type="button" class="close" data-dismiss="modal" aria-label="Close"><span aria-hidden="true">&times;</span></button>
+                    <h3 class="modal-title">请选择房间</h3>
+                </div>
+                <div class="modal-body">
+                    <table class="table table-hover">
+                        <thead>
+                        <tr>
+                            <th>房间 ID</th>
+                            <th>房间名</th>
+                            <th>主播登录名</th>
+                            <th>主播昵称</th>
+                        </tr>
+                        </thead>
+                        <tbody id="room-list-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block tail %}
+{{ super() }}
+{{ lib.form_js() }}
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+<script>
+    $('#all-btn').click(function(){
+        $('#all-btn').removeClass('btn-default').addClass('btn-info');
+        $('#tag-btn').removeClass('btn-info').addClass('btn-default');
+        $('#spec-btn').removeClass('btn-info').addClass('btn-default');
+    });
+    $('#tag-btn').click(function(){
+        $('#tag-btn').removeClass('btn-default').addClass('btn-info');
+        $('#all-btn').removeClass('btn-info').addClass('btn-default');
+        $('#spec-btn').removeClass('btn-info').addClass('btn-default');
+    });
+    $('#spec-btn').click(function(){
+        $('#spec-btn').removeClass('btn-default').addClass('btn-info');
+        $('#tag-btn').removeClass('btn-info').addClass('btn-default');
+        $('#all-btn').removeClass('btn-info').addClass('btn-default');
+    });
+
+    $('#tag-modal').on('show.bs.modal', function (event) {
+        var tag_list = [];
+        $.get('{{ url_for("broadcast.get_tags") }}', function(data){
+            var tags = data.tags;
+            $('#compere-tag-btn').empty();
+            for (var i=0; i < tags.length; i++) {
+                $('#compere-tag-btn').append('<button style="margin:2px 2px;" class="btn btn-info tag-option-btn" type="button" id="tag-' + tags[i].id + '" value="' + tags[i].id + '">' + tags[i].name + '</button>');
+                tag_list.push({id: tags[i].id, text: tags[i].name});
+            }
+
+            $('.tag-option-btn').click(function(e){
+                if ($('#compere-tag-select').val() == "") {
+                    $('#compere-tag-select').val($(e.target).prop("value")).trigger("change");
+                }
+                else {
+                    $('#compere-tag-select').val($('#compere-tag-select').val() + ',' + $(e.target).prop("value")).trigger("change");
+                }
+            });
+        });
+
+        $('#compere-tag-select').select2({tags: tag_list});
+    });
+
+    $('#spec-modal').on('show.bs.modal', function (event) {
+        var room_list = [];
+        $.get('{{ url_for("broadcast.get_rooms") }}', function(data){
+            var rooms = data.rooms;
+            $('#room-list-body').empty();
+            for (var i=0; i < rooms.length; i++) {
+                $('#room-list-body').append('<tr><td>' + rooms[i].room_id + '</td><td>' + rooms[i].room_name + '</td><td>' + rooms[i].login_name + '</td><td>' + rooms[i].display_name + '</td></tr>');
+            }
+        });
+
+    });
+
+</script>
+{% endblock %}
