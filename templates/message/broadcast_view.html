@@ -1,0 +1,24 @@
+{% extends 'indexed_thumbnail_list.html' %}
+{% block head %}
+{{ super() }}
+<style>
+    .actions-nav {
+        display: inline-block;
+    }
+    .actions-btn {
+        display: inline;
+    }
+</style>
+{% endblock %}
+{% block model_menu_bar %}
+{{ super() }}
+<a class="btn btn-primary pull-right actions-btn" href="{{ url_for('.create_broadcast_view') }}">添加广播</a>
+{% endblock %}
+{% block tail %}
+{{ super() }}
+<script>
+    $('.stop-btn').on('click', function(){
+        return confirm("您确定要停止此广播吗？");
+    });
+</script>
+{% endblock %}

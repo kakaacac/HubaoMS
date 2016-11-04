@@ -1,0 +1,113 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<h2 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif,'Microsoft Yahei','微软雅黑'">{{ title }}</h2><hr>
+<form method="POST" action="{{ action }}" id="edit_form">
+        {{ form.hidden_tag() }}
+        {{ form.hidden }}
+
+    <div class="form-group">
+        {{ form.task_name.label }}
+        {{ form.task_name(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.task_desc.label }}
+        {{ form.task_desc(class="form-control") }}
+    </div>
+
+        {{ form.award_type.label }}
+    <div class="row">
+        <div class="col-xs-4">
+            <div class="form-group">{{ form.award_type(class="form-control") }}</div>
+        </div>
+        <div class="col-xs-4">
+            <div class="form-group"><select class="form-control" id="award_currency" name="award_currency"></select></div>
+        </div>
+        <div class="col-xs-4">
+            <div class="form-group">{{ form.award_amount(class="form-control") }}</div>
+        </div>
+    </div>
+
+    <div class="form-group">
+        {{ form.img_url.label }}
+        {{ form.img_url(class="form-control", id="img_url") }}
+    </div>
+
+    <div class="form-group">
+        <label>选择图片</label>
+        {{ form.img }}
+    </div>
+
+    <div class="form-group" style="display:inline-block">
+        <button class="btn btn-primary btn-sm" id="upload_btn" type="button" disabled>上传图片</button>
+        <div class="text-danger" id="upload_msg" style="float:right; margin-left: 20px;"></div>
+    </div>
+    <p class="help-block">{{ form.help_msg }}</p><br>
+
+    <div class="form-group">
+        {{ form.display.label }}
+        {{ form.display(class="form-control") }}
+    </div>
+
+    <div class="form-group">
+        {{ form.task_type.label }}
+        {{ form.task_type(class="form-control") }}
+    </div>
+
+        {{ form.save(class="btn btn-primary") }}
+    <a href="{{ cancel }}">{{ form.cancel(class="btn btn-default", type="button") }}</a>
+</form>
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+<script>
+    var vc_options = {{ vc_options|safe }};
+    var prop_options = {{ prop_options|safe }};
+
+    function show_currency() {
+        if ($('#award_type').val() == "vc") {
+            for (var i=0; i < vc_options.length; i++) {
+                $('#award_currency').append($('<option>', {value: vc_options[i][0], text: vc_options[i][1]}));
+            }
+        }
+        else {
+            for (var i=0; i < prop_options.length; i++) {
+                $('#award_currency').append($('<option>', {value: prop_options[i][0], text: prop_options[i][1]}));
+            }
+        }
+    }
+
+    show_currency();
+
+    $('#award_type').on('change', function(){
+        $('#award_currency').find('option').remove();
+        show_currency();
+    })
+
+    $('#upload_btn').on('click', function(){
+        var data = new FormData();
+        var img = $('#img').prop('files')[0];
+        data.append('img', img);
+
+        $.ajax({
+            url: "{{ url_for('image_upload') }}",
+            type: 'POST',
+            data: data,
+            processData: false,
+            contentType: false,
+            dataType: 'json',
+            success: function(response){
+                $('#upload_msg').empty();
+                $('#img_url').val(response.img_url);
+            },
+            error: function(response){
+                $('#upload_msg').text('* ' + response.responseText);
+            }
+        });
+    });
+
+    $('#img').on('change', function(){
+        $('#upload_btn').prop('disabled', ($('#img').val() == ''));
+    })
+</script>
+{% endblock %}

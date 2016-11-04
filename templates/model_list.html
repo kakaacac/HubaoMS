@@ -1,0 +1,28 @@
+{% extends 'admin/master.html' %}
+{% import 'admin/lib.html' as lib with context %}
+
+{% set len = data|length %}
+
+{% block body %}
+{% block model_list_table %}
+<div style="margin-bottom: 10px; margin-top: 20px;" id="list-header">
+    <h2 style="display:inline; font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif,'Microsoft Yahei','微软雅黑'">{{ title }}</h2>
+    {% if len > 0 %}
+    <h4 style="display:inline; margin-left: 10px"><span class="label label-primary">
+        <b>{{ 1 + page*page_size }}</b> - <b>{{ page*page_size + len }}</b> / <b>{{ total }}</b>
+    </span></h4>
+    {% endif %}
+    {% block actions %}
+    {% endblock %}
+</div>
+{% block table %}
+{% endblock %}
+{% block list_pager %}
+    {% if num_pages is not none %}
+    {{ lib.pager(page, num_pages, pager_url) }}
+    {% else %}
+    {{ lib.simple_pager(page, len == page_size, pager_url) }}
+    {% endif %}
+{% endblock %}
+{% endblock %}
+{% endblock %}
