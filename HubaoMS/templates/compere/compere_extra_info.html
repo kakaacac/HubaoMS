@@ -1,0 +1,26 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+<h2 style="font-family: 'Helvetica Neue',Helvetica,Arial,sans-serif,'Microsoft Yahei','微软雅黑'">其他信息</h2>
+<table class="table table-striped table-bordered table-hover">
+    <tbody>
+    <tr>
+        <th>房间 ID</th><td>{{ room_id }}</td>
+    </tr>
+    <tr>
+        <th>观众数</th><td>{{ audience }}</td>
+    </tr>
+    <tr>
+        <th>关注数</th><td>{{ follower }}</td>
+    </tr>
+    <tr>
+        <th>直播数</th><td>{{ num_lives }}</td>
+    </tr>
+    <tr>
+        <th>人气数</th><td>{{ popularity }}</td>
+    </tr>
+    <tr>
+        <th>点赞数</th><td>{{ likes }}</td>
+    </tr>
+    </tbody>
+</table>
+{% endblock %}

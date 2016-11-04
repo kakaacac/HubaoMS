@@ -1,0 +1,36 @@
+{% extends 'admin/model/list.html' %}
+{% block head_css %}
+{{ super() }}
+<link type="text/css" rel="stylesheet" href="{{ url_for('static', filename='css/shade.css') }}"/>
+{% endblock %}
+{% block body %}
+{{ super() }}
+<div id="shade-overlay" style="display: none"></div>
+<div id="shade-wrap" style="display: none">
+    <div id="shade-outer">
+        <img id="shade-img" alt="" style="max-height: 850px; max-width: 1000px">
+        <a id="shade-close" style="display: block;"></a>
+    </div>
+</div>
+{% endblock %}
+{% block tail %}
+{{ super() }}
+<script>
+    $('.shade-btn').on('click', function() {
+        $('#shade-img').attr('src', $(this).data('src')).on('load', function() {
+            $('#shade-overlay').fadeIn().css({
+                height: $(document).height()
+            })
+        $('#shade-wrap').fadeIn().css({
+            left: $(document).width()/2-$('#shade-img').width()/2,
+            top: $(window).height()/2-$('#shade-img').height()/2 + $(window).scrollTop()
+            })
+        })
+    })
+
+    $('#shade-close').on('click', function() {
+        $('#shade-overlay').fadeOut()
+        $('#shade-wrap').fadeOut()
+    })
+</script>
+{% endblock %}

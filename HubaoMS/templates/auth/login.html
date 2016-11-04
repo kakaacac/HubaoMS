@@ -1,0 +1,17 @@
+{% extends 'admin/master.html' %}
+{% block body %}
+    <form method="POST" action="/auth/login" class="form-horizontal">
+        {{ form.hidden_tag() }}
+        {{ form.hidden }}
+
+        <div class="form-group">
+        {{ form.username.label(class="col-sm-1 control-label") }}
+        <div class="col-sm-5">{{ form.username(class="form-control") }}</div>
+        </div>
+        <div class="form-group">
+        {{ form.password.label(class="col-sm-1 control-label") }}
+        <div class="col-sm-5">{{ form.password(class="form-control") }}</div>
+        </div>
+        {{ form.submit }}
+</form>
+{% endblock %}

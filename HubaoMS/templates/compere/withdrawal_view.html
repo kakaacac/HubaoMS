@@ -1,0 +1,13 @@
+{% extends 'admin/model/list.html' %}
+{% block tail %}
+{{ super() }}
+<script>
+    $('.pass-btn').on('click', function(){
+        return confirm("您确定通过此申请吗？");
+    });
+
+    $('.reject-btn').on('click', function(){
+        return confirm("您确定拒绝此申请吗？");
+    });
+</script>
+{% endblock %}
