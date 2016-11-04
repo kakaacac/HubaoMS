@@ -2,6 +2,9 @@
 {% set title = '收益明细' %}
 {% import 'admin/lib.html' as lib with context %}
 
+{% block actions %}
+<a href="{{ url_for('user.property_info', uid=uid) }}" class="btn btn-info pull-right" style="display:inline; margin-left: 10px">资产信息</a>
+{% endblock %}
 {% block table %}
 <table class="table table-striped table-bordered table-hover">
     <thead>

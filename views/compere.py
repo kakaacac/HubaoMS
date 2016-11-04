@@ -11,7 +11,7 @@ from utils.formatter import format_thumbnail, format_compere_action, prop_name, 
 from models import GiftGiving, db, AppUser, UserCertification, Compere, RoomStat, CompereVerification, WithdrawHistory
 from config import PAGE_SIZE
 from forms import CompereConfigurationForm
-from utils.RedisPool import redis
+from utils import redis
 
 class CompereView(ModelView):
     can_create = False
@@ -69,7 +69,8 @@ class CompereView(ModelView):
             "page": page - 1,
             "pager_url": pager_url,
             "page_size": PAGE_SIZE,
-            "total": records.total
+            "total": records.total,
+            "uid": compere_id
         }
 
         return self.render("compere/income_detail.html", **kwargs)
@@ -123,7 +124,7 @@ class CompereVerificationView(ModelView):
         "actions": format_verification_actions
     }
 
-    list_template = "thumbnail_list.html"
+    list_template = "compere/compere_verification_view.html"
 
     def is_accessible(self):
         return current_user.is_authenticated

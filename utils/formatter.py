@@ -3,7 +3,7 @@ from datetime import datetime
 from flask import Markup, url_for
 
 from html_element import colorize, button
-from utils.RedisPool import redis
+from utils import redis
 
 def prop_name(pid):
     return pid
@@ -112,9 +112,9 @@ def format_verification_status(view, context, model, name):
 def format_verification_actions(view, context, model, name):
     return button([
         (u'<span class="glyphicon glyphicon-ok" title="通过"></span>',
-         url_for("verification.verification_pass", vid=model.ccid)),
+         url_for("verification.verification_pass", vid=model.ccid), 'pass-btn'),
         (u'<span class="glyphicon glyphicon-remove" title="拒绝"></span>',
-         url_for("verification.verification_fail", vid=model.ccid))
+         url_for("verification.verification_fail", vid=model.ccid), 'reject-btn')
     ], btn_class="", vertical=True) if model.status is None else ""
 
 
@@ -130,9 +130,9 @@ def format_withdrawal_status(view, context, model, name):
 def format_withdrawal_actions(view, context, model, name):
     return button([
         (u'<span class="glyphicon glyphicon-ok" title="同意"></span>',
-         url_for("withdrawal.withdrawal_pass", wid=model.id)),
+         url_for("withdrawal.withdrawal_pass", wid=model.id), 'pass-btn'),
         (u'<span class="glyphicon glyphicon-remove" title="拒绝"></span>',
-         url_for("withdrawal.withdrawal_fail", wid=model.id))
+         url_for("withdrawal.withdrawal_fail", wid=model.id), 'reject-btn')
     ], btn_class="", vertical=True) if model.status == 1 else ""
 
 
@@ -182,18 +182,41 @@ def format_broadcast_range(view, context, model, name):
 
 
 def format_broadcast_status(view, context, model, name):
-    return {
-        0: u"已停止",
-        1: colorize(u"等待中", 'orange'),
-        2: colorize(u"进行中", 'green')
-    }.get(model.status)
+    if not model.interrupted:
+        now = datetime.now()
+        if model.end_time >= now:
+            return colorize(u"进行中", "green") if model.start_time < now else colorize(u"等待中", "orange")
+    return u"已停止"
 
 
 def format_broadcast_actions(view, context, model, name):
-    if model.status == 0:
-        return ""
-    else:
+    if model.end_time >= datetime.now():
+        if model.interrupted:
+            return button([
+                (u"修改", url_for("broadcast.edit_broadcast_view", id=model.id)),
+                (u"重新启动", url_for("broadcast.restart_broadcast", id=model.id), 'restart-btn'),
+            ], btn_class="btn btn-default btn-sm")
+        else:
+            return button([
+                (u"修改", url_for("broadcast.edit_broadcast_view", id=model.id)),
+                (u"停止", url_for("broadcast.stop_broadcast", id=model.id), 'stop-btn'),
+            ], btn_class="btn btn-default btn-sm")
+    return ""
+
+
+def format_live_stat_actions(view, context, model, name):
+    return button([
+        (u'<span class="glyphicon glyphicon-list-alt" style="margin: 0 2px;" title="开播列表"></span>',
+         url_for("show_statistics.stream_list", id=model.id)),
+    ], btn_class="")
+
+
+def format_gift_stat_detail(role):
+    assert role in ["presenter", "recipient"]
+    title = u"赠礼" if role == "presenter" else u"收礼"
+    def f(view, context, model, name):
         return button([
-            (u"修改", url_for("broadcast.edit_broadcast_view", id=model.id)),
-            (u"停止", url_for("broadcast.stop_broadcast", id=model.id), 'stop-btn'),
-        ], btn_class="btn btn-default btn-sm")
+            (u'<span class="glyphicon glyphicon-list-alt" '
+             u'style="margin: 0 2px;" title="{}列表"></span>'.format(title),
+             url_for("gift_statistics.{}_list".format(role), id=model.id))], btn_class="")
+    return f

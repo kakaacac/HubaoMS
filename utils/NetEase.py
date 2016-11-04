@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-import hashlib
 import json
 import random
 import string
@@ -61,5 +60,6 @@ class NetEase(object):
             self.send_to_chatroom(room_id, msg_type, msg, ext)
 
 
-netease = NetEase()
+if __name__ == '__main__':
+    pass
 

@@ -9,7 +9,6 @@ from flask import flash, redirect, url_for, request
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
-from apscheduler.schedulers.background import BackgroundScheduler
 
 from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
@@ -18,9 +17,8 @@ from utils.formatter import format_thumbnail, format_account_action,format_room_
 from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room
 from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN
 from utils.functions import is_file_exists, hash_md5
-from utils.RedisPool import redis
-from utils.scheduler import db_jobstore
-from utils.NetEase import netease
+from utils import redis, netease, job_queue
+
 
 class UserView(ModelView):
     can_create = False
@@ -53,7 +51,7 @@ class UserView(ModelView):
                          "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S"),
                          "actions": format_user_action}
 
-    list_template = "thumbnail_list.html"
+    list_template = "indexed_thumbnail_list.html"
 
     def is_accessible(self):
         return current_user.is_authenticated
@@ -351,7 +349,6 @@ class TaskView(BaseView):
 
 
 def unblock_account_job(uid):
-    print "unblock_acct {} {}".format(uid, datetime.now().strftime("%Y-%m-%d %H:%M:%S"))
     # To avoid circular import, should be improved later
     from app import app
     with app.app_context():
@@ -640,16 +637,19 @@ class AccountManagementView(ModelView):
                                     user.uuid.replace("-", ""),
                                     expired_time.strftime("%Y-%m-%d %H:%M:%S"))
 
-
                 # Add scheduler job for unblock
-                scheduler = BackgroundScheduler()
-                from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
-                from config import DB_URL
-                scheduler.add_jobstore(db_jobstore, alias="sqlalchemy")
-                scheduler.add_jobstore(SQLAlchemyJobStore(DB_URL))
-                scheduler.add_job(unblock_account_job, 'date', args=(uid,), coalesce=True, misfire_grace_time=86400,
-                                  id="block_account_{}".format(uid), run_date=expired_time)
-                scheduler.start()
+                job_queue.put({
+                    "action": "add",
+                    "func": unblock_account_job,
+                    "trigger": 'date',
+                    "job_kwargs": {
+                        "args": (uid,),
+                        "coalesce": True,
+                        "misfire_grace_time": 86400,
+                        "id": "block_account_{}".format(uid),
+                        "run_date": expired_time
+                    }
+                })
 
                 user.locked = True
                 user.locked_time = datetime.now()
@@ -688,11 +688,18 @@ class AccountManagementView(ModelView):
                 redis.master().hset("control:block:room", rid, expired_time.strftime("%Y-%m-%d %H:%M:%S"))
 
                 # Add scheduler job for unblock
-                scheduler = BackgroundScheduler()
-                scheduler.add_jobstore(db_jobstore, alias="sqlalchemy")
-                scheduler.add_job(unblock_room_job, 'date', args=(rid,), coalesce=True, misfire_grace_time=86400,
-                                  id="block_room_{}".format(rid), run_date=expired_time)
-                scheduler.start()
+                job_queue.put({
+                    "action": "add",
+                    "func": unblock_room_job,
+                    "trigger": 'date',
+                    "job_kwargs": {
+                        "args": (rid,),
+                        "coalesce": True,
+                        "misfire_grace_time": 86400,
+                        "id": "block_room_{}".format(rid),
+                        "run_date": expired_time
+                    }
+                })
 
                 flash(u"封停成功", category="warning")
                 return redirect(url_for("account.index_view"))

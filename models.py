@@ -3,7 +3,8 @@ from time import time
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import BaseQuery, SQLAlchemy
 from flask_login import make_secure_token, UserMixin
-from sqlalchemy.dialects.postgresql import JSON, UUID
+from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
+from sqlalchemy.types import LargeBinary
 
 
 db = SQLAlchemy()
@@ -141,6 +142,7 @@ class Room(db.Model):
     control_flag = db.Column(db.Integer)
     game_id = db.Column(db.Integer)
     chatroom = db.Column(db.Integer)
+    tags = db.Column(ARRAY(db.Integer))
 
 
 class Compere(db.Model):
@@ -260,15 +262,15 @@ class Banner(db.Model):
 
 class Broadcast(db.Model):
     id = db.Column(db.String(128), primary_key=True)
-    index_num = db.Column(db.Integer)
     broadcast_content = db.Column(db.Text)
     created_time = db.Column(db.DateTime(timezone=False), nullable=False)
     start_time = db.Column(db.DateTime(timezone=False))
     end_time = db.Column(db.DateTime(timezone=False))
     broadcast_range = db.Column(db.String(32))
-    status = db.Column(db.Integer, nullable=False)
     target = db.Column(db.String)
     broadcast_interval = db.Column(db.Integer, nullable=False, default=60)
+    interrupted = db.Column(db.Boolean)
+    scheduler_job = db.relationship('ApschedulerJobs', backref='broadcast', uselist=False)
 
 
 class RoomTags(db.Model):
@@ -276,6 +278,84 @@ class RoomTags(db.Model):
     name = db.Column(db.String(256))
     mode = db.Column(db.Integer)
     weight = db.Column(db.Integer)
+
+
+class ApschedulerJobs(db.Model):
+    id =  db.Column(db.String(256), db.ForeignKey('broadcast.id'), primary_key=True)
+    next_run_time = db.Column(db.Float)
+    job_state = db.Column(LargeBinary, nullable=False)
+
+
+class DailyStatistics(db.Model):
+    id = db.Column(db.String, primary_key=True)
+    update_time = db.Column(db.DateTime)
+    processing_date = db.Column(db.DateTime)
+    new_compere = db.Column(db.Integer)
+    active_compere = db.Column(db.Integer)
+    total_compere = db.Column(db.Integer)
+    recipient = db.Column(db.Integer)
+    presenter = db.Column(db.Integer)
+    vcy_received = db.Column(db.Float)
+    vfc_received = db.Column(db.Float)
+    user_registered = db.Column(db.Integer)
+    uesr_logined = db.Column(db.Integer)
+    user_recharged = db.Column(db.Integer)
+    recharged_amount = db.Column(db.Float)
+    normal_show = db.Column(db.Integer)
+    paid_show = db.Column(db.Integer)
+    interactive_show = db.Column(db.Integer)
+    cheating_dice = db.Column(db.Integer)
+    qna = db.Column(db.Integer)
+
+
+class LiveStreamHistory(db.Model):
+    __tablename__ = "live_histories"
+
+    uid = db.Column(db.Integer, db.ForeignKey('users.uid'), primary_key=True)
+    rid = db.Column(db.Integer, db.ForeignKey('room.rid'), primary_key=True)
+    name = db.Column(db.String(256))
+    type = db.Column(db.String(64))
+    live_status = db.Column(db.Boolean, nullable=False, default=True)
+    width = db.Column(db.Integer)
+    height = db.Column(db.Integer)
+    max_audience = db.Column(db.Integer)
+    gains_follow = db.Column(db.Integer)
+    gains_likes = db.Column(db.Integer)
+    gains_subscription = db.Column(db.Integer)
+    start_time = db.Column(db.DateTime(timezone=True), primary_key=True)
+    close_time = db.Column(db.DateTime(timezone=True))
+    user_id = db.Column(UUID)
+    total_audience = db.Column(db.Integer)
+    max_fake = db.Column(db.Integer)
+    total_fake = db.Column(db.Integer)
+    user = db.relationship('AppUser', backref='live_stream')
+    room = db.relationship('Room', backref='live_stream')
+
+
+class GameStat(db.Model):
+    __tablename__ = "game_bonus_stats"
+
+    id = db.Column(db.Integer, primary_key=True)
+    room_id = db.Column(db.Integer, nullable=False)
+    compere_id = db.Column(UUID, nullable=False)
+    currency = db.Column(db.String(12), nullable=False)
+    amount = db.Column(db.Integer, nullable=False)
+    game_start = db.Column(db.DateTime(timezone=True))
+    game_end = db.Column(db.DateTime(timezone=True))
+    game_id = db.Column(db.Integer)
+
+
+class Refund(db.Model):
+    __tablename__ = "refund_log"
+
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(UUID, nullable=False)
+    compere_id = db.Column(UUID, nullable=False)
+    prop_id = db.Column(db.Integer, nullable=False)
+    qty = db.Column(db.Integer, nullable=False)
+    value = db.Column("t_price", db.Float)
+    currency = db.Column("currencies", nullable=False)
+    refund_time = db.Column("send_time", db.DateTime(timezone=False))
 
 
 if __name__ == '__main__':

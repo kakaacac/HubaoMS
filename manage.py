@@ -6,10 +6,12 @@ from views.user import UserView, FeedbackView, TaskView, AccountManagementView
 from views.auth import AuthView
 from views.compere import CompereView, CompereVerificationView, Withdrawal, CompereConf
 from views.room import RoomView
-from views.content import BannerView
+from views.content import BannerView, RoomTagsView
 from views.common import ImageUpload
 from views.message import BroadcastView
-from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, Broadcast
+from views.statistics import LiveShowStatView, GiftStatView
+from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, \
+    Broadcast, RoomTags, DailyStatistics
 
 api = Api()
 admin = Admin(name="Hubao TV", template_mode="bootstrap3")
@@ -37,6 +39,11 @@ admin.add_view(RoomView(name="Room", category="Room", endpoint="room", session=d
 
 # Content
 admin.add_view(BannerView(name="Banner", category="Content", endpoint="banner", session=db.session, model=Banner))
+admin.add_view(RoomTagsView(name="Room Tags", category="Content", endpoint="tags", session=db.session, model=RoomTags))
 
 # Message
-admin.add_view(BroadcastView(name="broadcast", category="Message", endpoint="broadcast", session=db.session, model=Broadcast))
+admin.add_view(BroadcastView(name="Broadcast", category="Message", endpoint="broadcast", session=db.session, model=Broadcast))
+
+# Statistics
+admin.add_view(LiveShowStatView(name="ShowStatistics", category="Statistics", endpoint="show_statistics", session=db.session, model=DailyStatistics))
+admin.add_view(GiftStatView(name="GiftStatistics", category="Statistics", endpoint="gift_statistics", session=db.session, model=DailyStatistics))

@@ -5,7 +5,7 @@ from flask import Flask
 from config import USER, PASSWORD, HOST, PORT, DATABASE, SOCKET_TIMEOUT, REDIS_SETTINGS, REDIS_SENTINELS
 from models import db
 from utils.login_manager import login_manager
-from utils.RedisPool import redis, integrated_redis
+from utils import redis, integrated_redis
 from manage import admin, api
 from utils.scheduler import init_scheduler
 
@@ -23,7 +23,7 @@ app.config["REDIS_SETTINGS"] = REDIS_SETTINGS
 app.secret_key = "test"
 
 # Start a schedule to execute or eliminate uncompleted jobs
-init_scheduler()
+# init_scheduler()
 
 db.init_app(app)
 login_manager.init_app(app)
@@ -33,6 +33,8 @@ api.init_app(app)
 integrated_redis.init_app(app)
 
 if __name__ == '__main__':
+    # Start a schedule to execute or eliminate uncompleted jobs
+    init_scheduler()
     app.run(debug=True, use_reloader=False)
     # from apscheduler.schedulers.background import BackgroundScheduler
     # from datetime import datetime, timedelta

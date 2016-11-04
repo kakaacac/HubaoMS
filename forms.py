@@ -4,7 +4,7 @@ from flask_wtf import Form
 from wtforms import HiddenField, StringField, PasswordField, SubmitField,\
     TextAreaField, SelectField, FloatField, IntegerField
 from wtforms.fields.html5 import DateTimeField
-from wtforms.validators import DataRequired, Optional, NumberRange
+from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
 from flask_admin.form import ImageUploadField
 from flask_admin.form.widgets import DateTimePickerWidget
 
@@ -62,7 +62,14 @@ class DateSelectForm(Form):
 
 
 def validate_end_time(form, field):
-    return field.data >= form.start_time.data and field.data + timedelta(hours=1) >= datetime.now()
+    if field.data < form.start_time.data or field.data + timedelta(seconds=30) < datetime.now():
+        raise ValidationError("Invalid end time")
+
+
+def validate_target(form, field):
+    if form.range.data != 'all' and not field.data:
+        raise ValidationError("Target cannot be empty")
+
 
 class BroadcastEditForm(Form):
     hidden = HiddenField()
@@ -70,7 +77,8 @@ class BroadcastEditForm(Form):
     start_time = DateTimeField(label=u"生效时间", default=datetime.now, validators=[DataRequired(),], widget=DateTimePickerWidget())
     end_time = DateTimeField(label=u"结束时间", default=datetime.now, validators=[DataRequired(), validate_end_time], widget=DateTimePickerWidget())
     interval = IntegerField(label=u"广播间隔", validators=[DataRequired(), NumberRange(min=1)], default=60)
-    target = TextAreaField(label=u"目标")
+    range = SelectField(label=u"范围", choices=[("all", u"全部"), ("tag", u"分类"), ("spec", u"指定")], default="all")
+    target = TextAreaField(label=u"目标", validators=[validate_target,])
     save = SubmitField(label=u"保存")
     cancel = SubmitField(label=u"取消")
 

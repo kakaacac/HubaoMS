@@ -139,7 +139,6 @@ class BannerView(ModelView):
                 with_entities(Room.rid, Room.name, AppUser.uuid, UserCertification.nickname).first()
 
         if not compere:
-            print query_value
             return json_response({
                 "error_msg": u"主播不存在"
             }, 200)
@@ -195,5 +194,31 @@ class BannerView(ModelView):
         flash(u"添加轮播图成功", category="info")
         return redirect(url_for(".index_view"))
 
+
+class RoomTagsView(ModelView):
+    can_create = True
+    can_edit = True
+    can_delete = True
+    column_display_actions = True
+    column_display_pk = True
+
+    column_list = ("id", "name", "mode", "weight")
+    column_default_sort = "id"
+    column_sortable_list = ("mode", "weight")
+    column_labels = {
+        "id": u"ID",
+        "name": u"标签名",
+        "mode": u"模块",
+        "weight": u"权重"
+    }
+    column_formatters = {
+        "mode": lambda v, c, m, n: {1: u"个人", 2: u"互动"}.get(m.mode)
+    }
+
+    form_columns = ("id", "name", "mode", "weight")
+    form_choices = {"mode": [("1", u"个人"), ("2", u"互动")]}
+
+    def is_accessible(self):
+        return current_user.is_authenticated
 
 
