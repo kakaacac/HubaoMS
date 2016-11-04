@@ -12,9 +12,10 @@ from views.message import BroadcastView
 from views.statistics import LiveShowStatView, GiftStatView
 from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, \
     Broadcast, RoomTags, DailyStatistics
+from config import BASE_URL
 
 api = Api()
-admin = Admin(name="Hubao TV", template_mode="bootstrap3")
+admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL)
 
 # Common
 api.add_resource(ImageUpload, "/image_upload", endpoint="image_upload")
