@@ -38,5 +38,6 @@ nosetests.xml
 # config
 config.py
 
-resource/
-static/
+HubaoMS/resource/
+HubaoMS/static/
+gunicorn.conf
