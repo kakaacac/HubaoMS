@@ -2,7 +2,7 @@
 from time import time
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_sqlalchemy import BaseQuery, SQLAlchemy
-from flask_login import make_secure_token, UserMixin
+from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy.types import LargeBinary
 
@@ -41,7 +41,6 @@ class User(db.Model, UserMixin):
         self.password = self.set_password(password)
         self.email = email
         self.role = role
-        self.auth_key = self.get_auth_token()
 
     def is_authenticated(self):
         return True
@@ -65,9 +64,6 @@ class User(db.Model, UserMixin):
         if self.password is None:
             return False
         return check_password_hash(self.password, password)
-
-    def get_auth_token(self):
-        return make_secure_token(self.username, self.password)
 
 
 class Role(db.Model):
