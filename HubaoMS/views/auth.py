@@ -16,7 +16,7 @@ class AuthView(BaseView):
     @expose('/login', methods=["GET"])
     def login(self):
         form = LoginForm()
-        return self.render("login.html", form=form)
+        return self.render("auth/login.html", form=form)
 
     @expose('/login', methods=["POST"])
     def login(self):

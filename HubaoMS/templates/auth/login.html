@@ -1,6 +1,6 @@
 {% extends 'admin/master.html' %}
 {% block body %}
-    <form method="POST" action="/auth/login" class="form-horizontal">
+    <form method="POST" action="{{ url_for('auth.login') }}" class="form-horizontal">
         {{ form.hidden_tag() }}
         {{ form.hidden }}
 
