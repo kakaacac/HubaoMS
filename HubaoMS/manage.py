@@ -21,7 +21,7 @@ admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL)
 api.add_resource(ImageUpload, "/image_upload", endpoint="image_upload")
 
 # Auth
-admin.add_view(AuthView(name="Login", url='/auth'))
+admin.add_view(AuthView(name="Login", endpoint='auth'))
 
 # User
 admin.add_view(UserView(name="User", category='User', endpoint='user', session=db.session, model=AppUser))
