@@ -124,7 +124,7 @@ class BroadcastView(ModelView):
     @expose('/edit/<id>')
     def edit_broadcast_view(self, id):
         form = BroadcastEditForm()
-        broadcast = Broadcast.query.get(id)
+        broadcast = Broadcast.query.get_or_404(id)
 
         form.content.data = broadcast.broadcast_content
         form.start_time.data = broadcast.start_time
@@ -151,7 +151,7 @@ class BroadcastView(ModelView):
     def edit_broadcast(self, id):
         form = BroadcastEditForm()
         if form.validate_on_submit():
-            broadcast = Broadcast.query.get(id)
+            broadcast = Broadcast.query.get_or_404(id)
 
             value = [int(v) for v in form.target.data.split(',')] if form.target.data else None
             kwargs = {
@@ -201,7 +201,7 @@ class BroadcastView(ModelView):
 
     @expose('/stop/<id>')
     def stop_broadcast(self, id):
-        broadcast = Broadcast.query.get(id)
+        broadcast = Broadcast.query.get_or_404(id)
         if broadcast.end_time < datetime.now() or broadcast.interrupted:
             flash(u"广播已停止", category="error")
             return redirect(url_for(".index_view"))
@@ -218,7 +218,7 @@ class BroadcastView(ModelView):
 
     @expose('/restart/<id>')
     def restart_broadcast(self, id):
-        broadcast = Broadcast.query.get(id)
+        broadcast = Broadcast.query.get_or_404(id)
         if broadcast.end_time < datetime.now():
             flash(u"广播已过期", category="error")
             return redirect(url_for(".index_view"))

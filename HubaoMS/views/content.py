@@ -42,7 +42,7 @@ class BannerView(ModelView):
 
     @expose('/detail/<id>')
     def other_info(self, id):
-        banner = Banner.query.get(id)
+        banner = Banner.query.get_or_404(id)
 
         kwargs = {
             "id": banner.id,
@@ -54,7 +54,7 @@ class BannerView(ModelView):
 
     @expose('/delete/<id>')
     def delete(self, id):
-        banner = Banner.query.get(id)
+        banner = Banner.query.get_or_404(id)
         db.session.delete(banner)
         db.session.commit()
         flash(u"删除轮播图成功", category="info")
@@ -62,7 +62,7 @@ class BannerView(ModelView):
 
     @expose('/edit/<id>')
     def banner_edit_view(self, id):
-        banner = Banner.query.get(id)
+        banner = Banner.query.get_or_404(id)
         form = BannerEditForm()
 
         form.room_id.data = banner.room_id
@@ -81,7 +81,7 @@ class BannerView(ModelView):
 
     @expose('/edit/<id>', methods=['POST',])
     def edit_banner(self, id):
-        banner = Banner.query.get(id)
+        banner = Banner.query.get_or_404(id)
         form = BannerEditForm()
 
         if not form.validate_on_submit():

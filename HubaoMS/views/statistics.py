@@ -2,14 +2,16 @@
 from math import ceil
 from datetime import timedelta, datetime
 import time
+from collections import OrderedDict, defaultdict
 from flask import request, url_for
 from flask_admin import expose
 from flask_admin.contrib.sqla import ModelView, tools
 from flask_login import current_user
 from sqlalchemy.sql import func, and_, or_, expression
 
-from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund
-from config import PAGE_SIZE, ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
+from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
+    Room
+from config import ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
 from utils.formatter import format_live_stat_actions, format_gift_stat_detail
 
 
@@ -34,7 +36,7 @@ class LiveShowStatView(ModelView):
         "normal_show": u"普通直播",
         "paid_show": u"付费直播",
         "interactive_show": u"互动直播",
-        "actions": u"操作"
+        "actions": u"开播列表"
     }
 
     column_formatters = {
@@ -197,7 +199,7 @@ class LiveShowStatView(ModelView):
 
     @expose('/list/<id>')
     def stream_list(self, id):
-        stat = DailyStatistics.query.get(id)
+        stat = DailyStatistics.query.get_or_404(id)
         page = int(request.args.get("page", 1))
 
         shows = LiveStreamHistory.query.\
@@ -208,7 +210,7 @@ class LiveShowStatView(ModelView):
                           LiveStreamHistory.close_time - LiveStreamHistory.start_time).\
             filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
-            paginate(page, PAGE_SIZE, False)
+            paginate(page, self.page_size, False)
 
         show_type = LiveStreamHistory.query.\
             with_entities(LiveStreamHistory.rid, func.count(GameStat.game_start)).\
@@ -219,7 +221,7 @@ class LiveShowStatView(ModelView):
                            LiveStreamHistory.close_time >= GameStat.game_end)).\
             group_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
-            paginate(page, PAGE_SIZE, False)
+            paginate(page, self.page_size, False)
 
         gifts = LiveStreamHistory.query.\
             with_entities(LiveStreamHistory.rid, func.sum(GiftGiving.value)).\
@@ -236,7 +238,7 @@ class LiveShowStatView(ModelView):
             filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
             group_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
-            paginate(page, PAGE_SIZE, False)
+            paginate(page, self.page_size, False)
 
         data = zip(*(zip(*shows.items) + zip(*show_type.items) + zip(*gifts.items)))
 
@@ -264,7 +266,7 @@ class LiveShowStatView(ModelView):
             "num_pages": shows.pages,
             "page": page - 1,
             "pager_url": pager_url,
-            "page_size": PAGE_SIZE,
+            "page_size": self.page_size,
             "total": shows.total
         }
 
@@ -278,7 +280,7 @@ class LiveShowStatView(ModelView):
         start_time = datetime.fromtimestamp(ts)
         start_time = start_time.replace(microsecond=microsec)
 
-        stream = LiveStreamHistory.query.filter_by(rid=room_id, start_time=start_time).first()
+        stream = LiveStreamHistory.query.filter_by(rid=room_id, start_time=start_time).first_or_404()
         interactives = GameStat.query.filter(GameStat.room_id == room_id,
                                              GameStat.game_start >= start_time,
                                              GameStat.game_end <= stream.close_time).all()
@@ -317,17 +319,185 @@ class GiftStatView(ModelView):
 
     @expose('/presenter/<id>')
     def presenter_list(self, id):
-        stat = DailyStatistics.query.get(id)
-        presenters = GiftGiving.query.\
-            with_entities(GiftGiving.uid, GiftGiving.currency, func.sum(GiftGiving.value)).\
-            filter(stat.processing_date == func.date(GiftGiving.send_time)).\
-            group_by(GiftGiving.uid, GiftGiving.currency).\
-            join(UserCertification, GiftGiving.uid == UserCertification.uid).with_entities(UserCertification.nickname)
-        print presenters.all()[0]
+        stat = DailyStatistics.query.get_or_404(id)
+        page = int(request.args.get("page", 1))
 
-        return id
+        ALL = db.session.query(GiftGiving.uid, GiftGiving.currency, GiftGiving.value, GiftGiving.send_time).\
+            filter(stat.processing_date == func.date(GiftGiving.send_time), GiftGiving.prop_id < 1000).cte("ALL")
+
+        ALL_UID = db.session.query(ALL.c.uid).group_by(ALL.c.uid).order_by(func.min(ALL.c.send_time))
+
+        UIDs = ALL_UID.offset((page - 1)*self.page_size).limit(self.page_size).subquery("UIDs")
+        RESULT = db.session.query(ALL.c.uid, ALL.c.money_type, func.sum(ALL.c.t_price)).\
+            join(UIDs, ALL.c.uid == UIDs.c.uid).group_by(ALL.c.uid, ALL.c.money_type).subquery("RESULT")
+        DATA = db.session.query(RESULT).join(UserCertification, UserCertification.uid == RESULT.c.uid).\
+            join(Room, Room.uid == RESULT.c.uid).\
+            add_columns(Room.rid, UserCertification.nickname)
+
+        count = ALL_UID.count()
+
+        # Calculate number of pages
+        if count > 0 and self.page_size:
+            num_pages = int(ceil(count / float(self.page_size)))
+        elif not self.page_size:
+            num_pages = 0  # hide pager for unlimited page_size
+        else:
+            num_pages = None  # use simple pager
+
+        data = OrderedDict()
+        for item in DATA.all():
+            if not data.has_key(item[0]):
+                data[item[0]] = {"vfc": 0, "vcy": 0, "login_name": item[4], "room_id": item[3]}
+            data[item[0]][item[1]] = item[2]
+
+        result  = []
+        for k, v in data.iteritems():
+            d = {"user_id": k}
+            d.update(v)
+            result.append(d)
+
+        def pager_url(p):
+            return url_for(".presenter_list", page=p+1, id=id)
+
+        kwargs = {
+            "data": result,
+            "num_pages": num_pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": count,
+            "title": u"赠礼列表 " + stat.processing_date.strftime("%Y-%m-%d"),
+            "sid": id
+        }
+        return self.render("statistics/presenter_list.html", **kwargs)
 
     @expose('/recipient/<id>')
     def recipient_list(self, id):
-        return id
+        stat = DailyStatistics.query.get_or_404(id)
+        page = int(request.args.get("page", 1))
+
+        ALL = db.session.query(GiftGiving.compere_id, GiftGiving.currency, GiftGiving.value, GiftGiving.send_time).\
+            filter(stat.processing_date == func.date(GiftGiving.send_time), GiftGiving.prop_id < 1000).cte("ALL")
+
+        ALL_UID = db.session.query(ALL.c.compere_id).group_by(ALL.c.compere_id).order_by(func.min(ALL.c.send_time))
+
+        UIDs = ALL_UID.offset((page - 1)*self.page_size).limit(self.page_size).subquery("UIDs")
+        RESULT = db.session.query(ALL.c.compere_id, ALL.c.money_type, func.sum(ALL.c.t_price)).\
+            join(UIDs, ALL.c.compere_id == UIDs.c.compere_id).group_by(ALL.c.compere_id, ALL.c.money_type).subquery("RESULT")
+        DATA = db.session.query(RESULT).join(UserCertification, UserCertification.uid == RESULT.c.compere_id).\
+            join(Room, Room.uid == RESULT.c.compere_id).\
+            add_columns(Room.rid, UserCertification.nickname)
+
+        count = ALL_UID.count()
+
+        # Calculate number of pages
+        if count > 0 and self.page_size:
+            num_pages = int(ceil(count / float(self.page_size)))
+        elif not self.page_size:
+            num_pages = 0  # hide pager for unlimited page_size
+        else:
+            num_pages = None  # use simple pager
+
+        data = OrderedDict()
+        for item in DATA.all():
+            if not data.has_key(item[0]):
+                data[item[0]] = {"vfc": 0, "vcy": 0, "login_name": item[4], "room_id": item[3]}
+            data[item[0]][item[1]] = item[2]
+
+        result  = []
+        for k, v in data.iteritems():
+            d = {"user_id": k}
+            d.update(v)
+            result.append(d)
+
+        def pager_url(p):
+            return url_for(".presenter_list", page=p+1, id=id)
+
+        kwargs = {
+            "data": result,
+            "num_pages": num_pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": count,
+            "title": u"收礼列表 " + stat.processing_date.strftime("%Y-%m-%d"),
+            "sid": id
+        }
+        return self.render("statistics/recipient_list.html", **kwargs)
+
+    @expose('/presenter/detail/<sid>/<uid>')
+    def presenter_detail(self, sid, uid):
+        stat = DailyStatistics.query.get(sid)
+        user = UserCertification.query.filter_by(uid=uid).first()
+        page = int(request.args.get("page", 1))
+
+        records = GiftGiving.query.filter(stat.processing_date == func.date(GiftGiving.send_time),
+                                          GiftGiving.prop_id < 1000,
+                                          GiftGiving.uid == uid).\
+            join(UserCertification, UserCertification.uid == GiftGiving.compere_id).\
+            join(Room, Room.uid == GiftGiving.compere_id).order_by(GiftGiving.send_time).\
+            with_entities(UserCertification.nickname, Room.rid,
+                          GiftGiving.send_time, GiftGiving.currency, GiftGiving.value).\
+            paginate(page, self.page_size, False)
+
+        data = [{
+            "login_name": item[0],
+            "room_id": item[1],
+            "send_time": item[2].strftime("%H:%M:%S"),
+            "currency": item[3],
+            "value": item[4]
+        } for item in records.items]
+
+        def pager_url(p):
+            return url_for(".presenter_detail", page=p+1, sid=sid, uid=uid)
+
+        kwargs = {
+            "data": data,
+            "num_pages": records.pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": records.total,
+            "title": u"{} {} 送礼记录".format(user.nickname, stat.processing_date.strftime("%Y-%m-%d"))
+        }
+
+        return self.render("statistics/presenter_detail.html", **kwargs)
+
+    @expose('/recipient/detail/<sid>/<uid>')
+    def recipient_detail(self, sid, uid):
+        stat = DailyStatistics.query.get(sid)
+        user = UserCertification.query.filter_by(uid=uid).first()
+        page = int(request.args.get("page", 1))
+
+        records = GiftGiving.query.filter(stat.processing_date == func.date(GiftGiving.send_time),
+                                          GiftGiving.prop_id < 1000,
+                                          GiftGiving.compere_id == uid).\
+            join(UserCertification, UserCertification.uid == GiftGiving.uid).\
+            join(Room, Room.uid == GiftGiving.uid).order_by(GiftGiving.send_time).\
+            with_entities(UserCertification.nickname, Room.rid,
+                          GiftGiving.send_time, GiftGiving.currency, GiftGiving.value).\
+            paginate(page, self.page_size, False)
+
+        data = [{
+            "login_name": item[0],
+            "room_id": item[1],
+            "send_time": item[2].strftime("%H:%M:%S"),
+            "currency": item[3],
+            "value": item[4]
+        } for item in records.items]
+
+        def pager_url(p):
+            return url_for(".presenter_detail", page=p+1, sid=sid, uid=uid)
+
+        kwargs = {
+            "data": data,
+            "num_pages": records.pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": records.total,
+            "title": u"{} {} 收礼记录".format(user.nickname, stat.processing_date.strftime("%Y-%m-%d"))
+        }
+
+        return self.render("statistics/recipient_detail.html", **kwargs)
 

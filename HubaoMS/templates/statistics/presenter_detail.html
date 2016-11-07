@@ -7,10 +7,10 @@
     <tr>
         <th>#</th>
         <th>主播登录名</th>
-        <th>房间 ID</th>
-        <th>收取小草</th>
-        <th>收取琥珀</th>
-        <th>详细</th>
+        <th>房间号</th>
+        <th>赠送时间</th>
+        <th>类型</th>
+        <th>价值</th>
     </tr>
     </thead>
     <tbody>
@@ -20,9 +20,9 @@
         <td>{{ i }}</td>
         <td>{{ row.login_name }}</td>
         <td>{{ row.room_id }}</td>
-        <td>{{ row.vfc }}</td>
-        <td>{{ row.vcy }}</td>
-        <td><a href="{{ url_for('gift_statistics.recipient_detail', sid=sid, uid=row.user_id) }}"><span class="glyphicon glyphicon-list-alt" style="margin: 0 2px;" title="收礼详情"></span></a></td>
+        <td>{{ row.send_time }}</td>
+        <td>{{ row.currency }}</td>
+        <td>{{ row.value }}</td>
     </tr>
     {% set i = i + 1 %}
     {% else %}

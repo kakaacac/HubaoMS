@@ -59,6 +59,7 @@ class CompereView(ModelView):
                           GiftGiving.prop_id, GiftGiving.qty, GiftGiving.value, GiftGiving.currency,
                           GiftGiving.send_time).\
             paginate(page, PAGE_SIZE, False)
+        print records
 
         kwargs = {
             "data": records.items,
@@ -131,7 +132,7 @@ class CompereVerificationView(ModelView):
 
     @expose('/<vid>/accept')
     def verification_pass(self, vid):
-        ver = CompereVerification.query.get(vid)
+        ver = CompereVerification.query.get_or_404(vid)
         ver.status = True
         db.session.commit()
         flash(u"审核已通过", category="info")
@@ -139,7 +140,7 @@ class CompereVerificationView(ModelView):
 
     @expose('/<vid>/reject')
     def verification_fail(self, vid):
-        ver = CompereVerification.query.get(vid)
+        ver = CompereVerification.query.get_or_404(vid)
         ver.status = False
         db.session.commit()
         flash(u"审核已拒绝", category="warning")
@@ -184,7 +185,7 @@ class Withdrawal(ModelView):
 
     @expose('/<wid>/accept')
     def withdrawal_pass(self, wid):
-        wd = WithdrawHistory.query.get(wid)
+        wd = WithdrawHistory.query.get_or_404(wid)
         wd.status = 2
         db.session.commit()
         flash(u"提现申请已通过", category="info")
@@ -192,7 +193,7 @@ class Withdrawal(ModelView):
 
     @expose('/<wid>/reject')
     def withdrawal_fail(self, wid):
-        wd = WithdrawHistory.query.get(wid)
+        wd = WithdrawHistory.query.get_or_404(wid)
         wd.status = 3
         wd.deal_time = int(time.time())
         db.session.commit()

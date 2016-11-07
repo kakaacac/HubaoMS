@@ -5,7 +5,7 @@ import requests
 from datetime import datetime, timedelta
 from math import ceil
 from sqlalchemy.sql import func
-from flask import flash, redirect, url_for, request
+from flask import flash, redirect, url_for, request, abort
 from flask_admin import BaseView, expose
 from flask_admin.contrib.sqla import ModelView
 from flask_login import current_user
@@ -86,7 +86,7 @@ class UserView(ModelView):
             return url_for(".recharge_detail", page=p+1, uid=uid)
 
         page = int(request.args.get("page", 1))
-        payments = Payment.query.filter_by(user=AppUser.query.get(uid)).paginate(page, PAGE_SIZE, False)
+        payments = Payment.query.filter_by(user=AppUser.query.get_or_404(uid)).paginate(page, PAGE_SIZE, False)
 
         kwargs = {
             "uid": uid,
@@ -105,7 +105,7 @@ class UserView(ModelView):
         def pager_url(p):
             return url_for(".property_info", page=p+1, uid=uid)
 
-        user_property = UserProperty.query.get(uid)
+        user_property = UserProperty.query.get_or_404(uid)
         grass = user_property.vfc if user_property else 0
         bone = user_property.vcy if user_property else 0
         amber = db.session.query(func.sum(GiftGiving.value)).filter_by(compere_id=uid, currency="vcy").one()[0] or 0
@@ -138,7 +138,7 @@ class UserView(ModelView):
 
     @expose("/other_info/<uid>")
     def other_info(self, uid):
-        user = AppUser.query.get(uid)
+        user = AppUser.query.get_or_404(uid)
         kwargs = {
             "uuid": user.uuid,
             "device_id": user.device.udid,
@@ -180,7 +180,7 @@ class FeedbackView(ModelView):
 
     @expose("/process/<fid>")
     def process(self, fid):
-        feedback = Feedback.query.get(fid)
+        feedback = Feedback.query.get_or_404(fid)
         feedback.status = 1
         db.session.commit()
         flash(u"操作成功", category="info")
@@ -225,6 +225,8 @@ class TaskView(BaseView):
     def task_edit_view(self, task_id):
         tasks = reduce(lambda x, y: x.update({y.get("task_id"):y}) or x, self.tasks, {})
         task = tasks.get(task_id)
+        if task is None:
+            abort(404)
         award_info = task["prize"].split(":")
 
         form = TaskEditForm()
@@ -524,7 +526,7 @@ class AccountManagementView(ModelView):
 
     @expose("/block/<uid>")
     def block_account(self, uid):
-        user = AppUser.query.get(uid)
+        user = AppUser.query.get_or_404(uid)
         if user.locked:
             flash(u"用户已被封禁", category="info")
             return redirect(url_for("account.index_view"))
@@ -537,7 +539,7 @@ class AccountManagementView(ModelView):
 
     @expose("/unblock/<uid>")
     def unblock_account(self, uid):
-        user = AppUser.query.get(uid)
+        user = AppUser.query.get_or_404(uid)
         if user.locked:
             user.locked = False
             db.session.commit()
@@ -550,7 +552,7 @@ class AccountManagementView(ModelView):
 
     @expose("/suspend_room/<rid>")
     def suspend_room(self, rid):
-        room = Room.query.get(rid)
+        room = Room.query.get_or_404(rid)
         if room.enable:
             room_id = room.rid
             end_time = int(time.time()) + 300
@@ -582,7 +584,7 @@ class AccountManagementView(ModelView):
 
     @expose("/block_room/<rid>")
     def block_room(self, rid):
-        room = Room.query.get(rid)
+        room = Room.query.get_or_404(rid)
         if room.enable:
             # send NetEase message
             self.send_block_room_msg(room.chatroom, 2)
@@ -605,7 +607,7 @@ class AccountManagementView(ModelView):
 
     @expose("/unblock_room/<rid>")
     def unblock_room(self, rid):
-        room = Room.query.get(rid)
+        room = Room.query.get_or_404(rid)
         if room.enable:
             flash(u"房间未被封停", category="info")
             return redirect(url_for("account.index_view"))
@@ -622,7 +624,7 @@ class AccountManagementView(ModelView):
 
     @expose("/temporary_block/<uid>", methods=['POST',])
     def temporary_block_account(self, uid):
-        user = AppUser.query.get(uid)
+        user = AppUser.query.get_or_404(uid)
         if user.locked:
             flash(u"用户已被封禁", category="info")
             return redirect(url_for("account.index_view"))
@@ -663,7 +665,7 @@ class AccountManagementView(ModelView):
 
     @expose("/temporary_block_room/<rid>", methods=['POST',])
     def temporary_block_room(self, rid):
-        room = Room.query.get(rid)
+        room = Room.query.get_or_404(rid)
         if room.enable:
             form = DateSelectForm()
             if form.validate_on_submit():

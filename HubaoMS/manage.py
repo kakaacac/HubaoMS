@@ -12,7 +12,7 @@ from views.message import BroadcastView
 from views.statistics import LiveShowStatView, GiftStatView
 from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, \
     Broadcast, RoomTags, DailyStatistics
-from config import BASE_URL, STATIC_BASE_URL
+from config import BASE_URL
 
 api = Api(prefix=BASE_URL)
 admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL)
