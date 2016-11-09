@@ -2,7 +2,7 @@
 from datetime import datetime, timedelta
 from flask_wtf import Form
 from wtforms import HiddenField, StringField, PasswordField, SubmitField,\
-    TextAreaField, SelectField, FloatField, IntegerField
+    TextAreaField, SelectField, FloatField, IntegerField, BooleanField
 from wtforms.fields.html5 import DateTimeField
 from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
 from flask_admin.form import ImageUploadField
@@ -12,6 +12,7 @@ class LoginForm(Form):
     hidden = HiddenField()
     username = StringField(label="Username")
     password = PasswordField()
+    remember = BooleanField(label="Remember me")
     submit = SubmitField(label="Login")
 
 

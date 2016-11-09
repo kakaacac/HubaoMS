@@ -1,17 +1,46 @@
 {% extends 'admin/master.html' %}
+{% block head %}
+    {{ super() }}
+    <style>
+        .container, body, html {
+            height: 100%;
+        }
+        .login-body {
+            height: 50%;
+            width: 100%;
+            display: table;
+        }
+        .login-form {
+            display: table-cell;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
 {% block body %}
-    <form method="POST" action="{{ url_for('auth.login') }}" class="form-horizontal">
-        {{ form.hidden_tag() }}
-        {{ form.hidden }}
+<div class="login-body">
+    <div class="login-form">
+        <form method="POST" action="{{ url_for('login.index') }}" class="form-horizontal">
+            {{ form.hidden_tag() }}
+            {{ form.hidden }}
 
-        <div class="form-group">
-        {{ form.username.label(class="col-sm-1 control-label") }}
-        <div class="col-sm-5">{{ form.username(class="form-control") }}</div>
-        </div>
-        <div class="form-group">
-        {{ form.password.label(class="col-sm-1 control-label") }}
-        <div class="col-sm-5">{{ form.password(class="form-control") }}</div>
-        </div>
-        {{ form.submit }}
-</form>
+            <div class="form-group">
+                {{ form.username.label(class="col-sm-offset-3 col-sm-1 control-label") }}
+                <div class="col-sm-5">{{ form.username(class="form-control") }}</div>
+            </div>
+            <div class="form-group">
+                {{ form.password.label(class="col-sm-offset-3 col-sm-1 control-label") }}
+                <div class="col-sm-5">{{ form.password(class="form-control") }}</div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-4 col-sm-8">
+                    {{ form.remember.label }}
+                    {{ form.remember }}
+                </div>
+            </div>
+            <div class="form-group">
+                <div class="col-sm-offset-4 col-sm-8">{{ form.submit(class="btn btn-default") }}</div>
+            </div>
+        </form>
+    </div>
+</div>
 {% endblock %}

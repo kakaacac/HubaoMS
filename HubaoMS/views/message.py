@@ -1,14 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
 from flask_admin import expose
-from flask import url_for, request, flash, redirect
-from apscheduler.schedulers.background import BackgroundScheduler
+from flask import url_for, flash, redirect
 import time
 from datetime import datetime
 import random
 from string import ascii_lowercase, digits
 
+from base import AuthenticatedModelView
 from utils.formatter import format_broadcast_actions, format_broadcast_range, format_broadcast_status
 from models import Broadcast, RoomTags, Room, db
 from forms import BroadcastEditForm
@@ -30,12 +28,7 @@ def send_broadcast(message, broadcast_range, tags=None, rooms=None):
         netease.send_to_chatrooms([item.chatroom for item in rooms], 0, msg=message)
 
 
-class BroadcastView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class BroadcastView(AuthenticatedModelView):
     column_auto_select_related = True
     column_filters = ("broadcast_range",)
     column_list = ("broadcast_content", "created_time", "start_time", "end_time",
@@ -60,9 +53,6 @@ class BroadcastView(ModelView):
         "actions": format_broadcast_actions
     }
     list_template = "message/broadcast_view.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose('/create')
     def create_broadcast_view(self):

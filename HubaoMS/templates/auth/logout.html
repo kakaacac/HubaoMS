@@ -1,0 +1,27 @@
+{% extends 'admin/master.html' %}
+{% block head %}
+    {{ super() }}
+    <meta http-equiv="refresh" content="1;url={{ url_for('admin.index') }}" />
+    <style>
+        .container, body, html {
+            height: 100%;
+        }
+        .index_body {
+            height: 50%;
+            width: 100%;
+            display: table;
+        }
+        .index_content {
+            text-align: center;
+            display: table-cell;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+<div class="index_body">
+    <div class="index_content">
+        <p>You are logging out...</p>
+    </div>
+</div>
+{% endblock %}

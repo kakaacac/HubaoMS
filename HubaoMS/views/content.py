@@ -1,25 +1,19 @@
 # -*- coding: utf-8 -*-
 from flask import flash, redirect, url_for, request
 from flask_admin import expose
-from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
 
+from base import AuthenticatedModelView
 from models import Banner, db, AppUser, Room, UserCertification
 from utils.formatter import format_thumbnail, format_banner_actions
 from forms import BannerEditForm
 from utils.functions import is_file_exists, json_response
 
-class BannerView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class BannerView(AuthenticatedModelView):
     column_list = ("id", "room_id", "room.name", "image", "login_name", "compere.display_name",
-                   "position", "actions")
+                   "position", "flag", "actions")
     column_default_sort = "id"
     column_searchable_list = ("room_id", "room.name", "login_name", "compere.display_name")
-    column_sortable_list = ("room_id", "position")
+    column_sortable_list = ("room_id", "position", "flag")
     column_labels = {
         "id": u"ID",
         "room_id": u"房间 ID",
@@ -28,17 +22,17 @@ class BannerView(ModelView):
         "login_name": u"主播登录名",
         "compere.display_name": u"主播昵称",
         "position": u"位置",
+        "flag": u"类型",
         "actions": u"操作"
     }
     column_formatters = {
         "image": format_thumbnail("image"),
-        "actions": format_banner_actions
+        "actions": format_banner_actions,
+        "flag": lambda v, c, m, n: u"网页" if m.flag == "web" else u"普通",
+        "position": lambda v, c, m, n: {0: u"首页", 1: u"互动", 2: u"热播"}.get(m.position, 0)
     }
 
     list_template = "content/banner_view.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose('/detail/<id>')
     def other_info(self, id):
@@ -195,7 +189,7 @@ class BannerView(ModelView):
         return redirect(url_for(".index_view"))
 
 
-class RoomTagsView(ModelView):
+class RoomTagsView(AuthenticatedModelView):
     can_create = True
     can_edit = True
     can_delete = True
@@ -217,8 +211,5 @@ class RoomTagsView(ModelView):
 
     form_columns = ("id", "name", "mode", "weight")
     form_choices = {"mode": [("1", u"个人"), ("2", u"互动")]}
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
 

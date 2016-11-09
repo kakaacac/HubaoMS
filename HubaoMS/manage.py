@@ -2,8 +2,9 @@
 from flask_admin import Admin
 from flask_restful import Api
 
+from views.base import IndexView
 from views.user import UserView, FeedbackView, TaskView, AccountManagementView
-from views.auth import AuthView
+from views.auth import LoginView, LogoutView
 from views.compere import CompereView, CompereVerificationView, Withdrawal, CompereConf
 from views.room import RoomView
 from views.content import BannerView, RoomTagsView
@@ -15,13 +16,10 @@ from models import db, AppUser, Feedback, Compere, CompereVerification, Withdraw
 from config import BASE_URL
 
 api = Api(prefix=BASE_URL)
-admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL)
+admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL, index_view=IndexView())
 
 # Common
 api.add_resource(ImageUpload, "/image_upload", endpoint="image_upload")
-
-# Auth
-admin.add_view(AuthView(name="Login", endpoint='auth'))
 
 # User
 admin.add_view(UserView(name="User", category='User', endpoint='user', session=db.session, model=AppUser,
@@ -65,3 +63,9 @@ admin.add_view(LiveShowStatView(name="ShowStatistics", category="Statistics", en
 admin.add_view(GiftStatView(name="GiftStatistics", category="Statistics", endpoint="gift_statistics",
                             session=db.session, model=DailyStatistics,
                             menu_icon_type='glyph', menu_icon_value='glyphicon-gift'))
+
+# Auth
+admin.add_view(LoginView(name="Login", category="Manage", endpoint='login',
+                         menu_icon_type='glyph', menu_icon_value='glyphicon-log-in'))
+admin.add_view(LogoutView(name="Logout", category="Manage", endpoint='logout',
+                          menu_icon_type='glyph', menu_icon_value='glyphicon-log-out'))

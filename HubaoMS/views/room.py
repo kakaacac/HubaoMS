@@ -1,15 +1,9 @@
 # -*- coding: utf-8 -*-
-from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
-
+from base import AuthenticatedModelView
 from utils.formatter import format_thumbnail, format_room_channel, format_boolean
 
-class RoomView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
 
+class RoomView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("rid", "uid", "user.cert.nickname", "channel", "name", "bulletin", "enable", "on_air",
                    "created_time", "screenshot", "chatroom")
@@ -39,6 +33,3 @@ class RoomView(ModelView):
     }
 
     list_template = "thumbnail_list.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated

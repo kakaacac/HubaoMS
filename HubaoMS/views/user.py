@@ -6,10 +6,9 @@ from datetime import datetime, timedelta
 from math import ceil
 from sqlalchemy.sql import func
 from flask import flash, redirect, url_for, request, abort
-from flask_admin import BaseView, expose
-from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
+from flask_admin import expose
 
+from base import AuthenticatedBaseView, AuthenticatedModelView
 from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
 from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
@@ -20,12 +19,7 @@ from utils.functions import is_file_exists, hash_md5
 from utils import redis, netease, job_queue
 
 
-class UserView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class UserView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("uid", "cert.nickname", "display_name", "avatar", "sex", "compere.auth_status", "phone.phone",
                    "cert.created_time", "level", "actions")
@@ -52,9 +46,6 @@ class UserView(ModelView):
                          "actions": format_user_action}
 
     list_template = "indexed_thumbnail_list.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose("/gift_giving/<uid>")
     def gift_giving_detail(self, uid):
@@ -150,12 +141,7 @@ class UserView(ModelView):
         return self.render("user/user_extra_info.html", **kwargs)
 
 
-class FeedbackView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class FeedbackView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("id", "uid", "cert.nickname", "cert.user.display_name", "contact", "body", "created_at", "status", "action")
     column_default_sort = "id"
@@ -175,9 +161,6 @@ class FeedbackView(ModelView):
                          "created_at": lambda v, c, m, n: m.created_at.strftime("%Y-%m-%d %H:%M:%S"),
                          "action": lambda v, c, m, n: button([(u"设为已处理", url_for("feedback.process", fid=m.id))]) if m.status == 0 else None}
 
-    def is_accessible(self):
-        return current_user.is_authenticated
-
     @expose("/process/<fid>")
     def process(self, fid):
         feedback = Feedback.query.get_or_404(fid)
@@ -187,7 +170,7 @@ class FeedbackView(ModelView):
         return redirect(url_for("feedback.index_view"))
 
 
-class TaskView(BaseView):
+class TaskView(AuthenticatedBaseView):
     def __init__(self, name=None, category=None, endpoint=None, url=None,
                  static_folder=None, static_url_path=None,
                  menu_class_name=None, menu_icon_type=None, menu_icon_value=None):
@@ -206,9 +189,6 @@ class TaskView(BaseView):
             ("5", u"小鲜肉"),
             ("6", u"时光鸡")
         ]
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose('/')
     def task_list(self):
@@ -375,12 +355,7 @@ def unblock_room_job(rid):
             redis.master().hdel("control:block:room", rid)
 
 
-class AccountManagementView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class AccountManagementView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("uid", "cert.nickname", "display_name", "locked", "locked_time", "acc_action",
                    "room.control_flag", "room.disable_time", "room_action")
@@ -408,9 +383,6 @@ class AccountManagementView(ModelView):
         "room_action": format_room_action
     }
     list_template = "user/account_management.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     # Override index_view function
     @expose('/')
@@ -632,7 +604,7 @@ class AccountManagementView(ModelView):
             form = DateSelectForm()
             if form.validate_on_submit():
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = datetime.now() + timedelta(seconds=block_time)
+                expired_time = datetime.now() + timedelta(days=block_time)
 
                 # Store expiration info at redis
                 redis.master().hset("control:block:account",
@@ -670,7 +642,7 @@ class AccountManagementView(ModelView):
             form = DateSelectForm()
             if form.validate_on_submit():
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = datetime.now() + timedelta(seconds=block_time)
+                expired_time = datetime.now() + timedelta(days=block_time)
 
                 #cut off video stream
                 self.control_video_stream(rid, room.user.uuid)

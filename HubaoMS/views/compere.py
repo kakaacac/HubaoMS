@@ -1,10 +1,9 @@
 # -*- coding: utf-8 -*-
 import time
 from flask import flash, redirect, url_for, request
-from flask_admin import BaseView, expose
-from flask_admin.contrib.sqla import ModelView
-from flask_login import current_user
+from flask_admin import expose
 
+from base import AuthenticatedBaseView, AuthenticatedModelView
 from utils.formatter import format_thumbnail, format_compere_action, prop_name, prop_type, format_receive_value,\
     format_verification_status, format_verification_actions, format_time, format_withdrawal_status,\
     format_withdrawal_actions, format_withdrawal_amount
@@ -13,12 +12,8 @@ from config import PAGE_SIZE
 from forms import CompereConfigurationForm
 from utils import redis
 
-class CompereView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
 
+class CompereView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("uid", "rid", "user.cert.nickname", "user.display_name", "image", "description",
                    "user.level", "actions")
@@ -41,9 +36,6 @@ class CompereView(ModelView):
     }
 
     list_template = "compere/compere_view.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose('/income/<compere_id>')
     def income(self, compere_id):
@@ -91,12 +83,7 @@ class CompereView(ModelView):
         return self.render("compere/compere_extra_info.html", **kwargs)
 
 
-class CompereVerificationView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class CompereVerificationView(AuthenticatedModelView):
     column_list = ("uid", "real_name", "user.cert.nickname", "card_id", "bankcard_no", "id_card_front", "id_card_back",
                    "phtot_in_hand", "commit_time", "status", "actions")
     column_default_sort = "uid"
@@ -127,9 +114,6 @@ class CompereVerificationView(ModelView):
 
     list_template = "compere/compere_verification_view.html"
 
-    def is_accessible(self):
-        return current_user.is_authenticated
-
     @expose('/<vid>/accept')
     def verification_pass(self, vid):
         ver = CompereVerification.query.get_or_404(vid)
@@ -147,12 +131,7 @@ class CompereVerificationView(ModelView):
         return redirect(url_for(".index_view"))
 
 
-class Withdrawal(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class Withdrawal(AuthenticatedModelView):
     column_list = ("id", "uid", "user.cert.nickname", "amount", "vfc_amount", "vcy_amount", "apply_time",
                    "deal_time", "status", "actions")
     column_default_sort = "id"
@@ -180,9 +159,6 @@ class Withdrawal(ModelView):
         "actions": format_withdrawal_actions
     }
 
-    def is_accessible(self):
-        return current_user.is_authenticated
-
     @expose('/<wid>/accept')
     def withdrawal_pass(self, wid):
         wd = WithdrawHistory.query.get_or_404(wid)
@@ -201,10 +177,7 @@ class Withdrawal(ModelView):
         return redirect(url_for(".index_view"))
 
 
-class CompereConf(BaseView):
-    def is_accessible(self):
-        return current_user.is_authenticated
-
+class CompereConf(AuthenticatedBaseView):
     @expose(methods=['GET', 'POST'])
     def compere_configuration(self):
         form = CompereConfigurationForm()

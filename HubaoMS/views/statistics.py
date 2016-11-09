@@ -2,25 +2,20 @@
 from math import ceil
 from datetime import timedelta, datetime
 import time
-from collections import OrderedDict, defaultdict
+from collections import OrderedDict
 from flask import request, url_for
 from flask_admin import expose
-from flask_admin.contrib.sqla import ModelView, tools
-from flask_login import current_user
+from flask_admin.contrib.sqla import tools
 from sqlalchemy.sql import func, and_, or_, expression
 
+from base import AuthenticatedModelView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
     Room
 from config import ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
 from utils.formatter import format_live_stat_actions, format_gift_stat_detail
 
 
-class LiveShowStatView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class LiveShowStatView(AuthenticatedModelView):
     column_list = ("processing_date", "new_compere", "active_compere", "total_compere", "total_show", "normal_show",
                    "paid_show", "interactive_show", "actions")
     column_default_sort = ("processing_date", True)
@@ -48,9 +43,6 @@ class LiveShowStatView(ModelView):
     extra_sorting = {
         4: "normal_show + paid_show"
     }
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     def _get_sorting_column_by_idx(self, idx):
         if idx in self.extra_sorting:
@@ -249,11 +241,12 @@ class LiveShowStatView(ModelView):
             "login_name": item[0],
             "room_id": item[1],
             "start_time": item[2].strftime("%Y-%m-%d %H:%M:%S"),
-            "end_time": item[3].strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": item[3].strftime("%Y-%m-%d %H:%M:%S") if item[3] else u"直播中",
             "max_audience": item[4] or 0,
             "total_audience": item[5] or 0,
             "type": item[6],
-            "duration": str(item[7] - timedelta(microseconds=item[7].microseconds)) if item[7] > zero_duration else str(zero_duration),
+            "duration": (str(item[7] - timedelta(microseconds=item[7].microseconds))
+                         if item[7] > zero_duration else str(zero_duration)) if item[7] else u"直播中",
             "interactive": item[9] > 0,
             "income": item[11] or 0
                 } for item in data]
@@ -267,10 +260,11 @@ class LiveShowStatView(ModelView):
             "page": page - 1,
             "pager_url": pager_url,
             "page_size": self.page_size,
-            "total": shows.total
+            "total": shows.total,
+            "date": stat.processing_date.strftime("%Y-%m-%d")
         }
 
-        return self.render("statistics/live_show_list.html", **kwargs)
+        return self.render("statistics/live_stream_list.html", **kwargs)
 
     @expose('/detail/<id>')
     def stream_detail(self, id):
@@ -280,20 +274,105 @@ class LiveShowStatView(ModelView):
         start_time = datetime.fromtimestamp(ts)
         start_time = start_time.replace(microsecond=microsec)
 
-        stream = LiveStreamHistory.query.filter_by(rid=room_id, start_time=start_time).first_or_404()
+        streams = LiveStreamHistory.query.\
+            filter(LiveStreamHistory.rid == room_id, LiveStreamHistory.start_time >= start_time).\
+            join(AppUser, AppUser.uid == LiveStreamHistory.uid).\
+            with_entities(AppUser.uuid, LiveStreamHistory).order_by(LiveStreamHistory.start_time).limit(2).all()
+        if len(streams) == 2:
+            stream, next_stream = streams
+        else:
+            stream = streams[0]
+            next_stream = None
+
+        duration = stream[1].close_time - stream[1].start_time
+        duration -= timedelta(microseconds=duration.microseconds)
+
+        refund_limit = max(stream[1].close_time + timedelta(seconds=1), next_stream[1].close_time) if next_stream \
+            else stream[1].close_time + timedelta(seconds=1)
+
         interactives = GameStat.query.filter(GameStat.room_id == room_id,
                                              GameStat.game_start >= start_time,
-                                             GameStat.game_end <= stream.close_time).all()
+                                             GameStat.game_end <= stream[1].close_time).\
+            order_by(GameStat.game_start).all()
 
-        return id
+        # interactive games info
+        is_interactive = len(interactives) > 0
+        if is_interactive:
+            interactives_info = {
+                "duration": timedelta(),
+                "compensation": {"vfc": 0, "vcy": 0},
+                "consumption": {"vfc": 0, "vcy": 0},
+                "count": {1: 0, 2: 0}
+            }
+            interactive_data = []
+
+            for item in interactives:
+                game_duration = item.game_end - item.game_start
+                interactives_info["duration"] += game_duration
+                interactives_info["consumption"][item.currency] += item.bet or 0
+                interactives_info["compensation"][item.currency] += item.award + interactives_info["consumption"][item.currency]
+                interactives_info["count"][item.game_id or 1] += 1
+
+                interactive_data.append({
+                    "start": item.game_start.strftime("%H:%M:%S"),
+                    "end": item.game_end.strftime("%H:%M:%S"),
+                    "duration": str(game_duration - timedelta(microseconds=game_duration.microseconds)),
+                    "type": item.game_id,
+                    "consumption": item.bet or 0,
+                    "compensation": item.bet or 0 + item.award,
+                    "currency": item.currency
+                })
+
+            interactives_info["duration"] -= timedelta(microseconds=interactives_info["duration"].microseconds)
+            interactives_info["duration"] = str(interactives_info["duration"])
+            interactives_info["count"] = [(k, v) for k, v in interactives_info["count"].iteritems() if v > 0]
+        else:
+            interactives_info = None
+            interactive_data = None
+
+        # ticket info
+        is_paid = stream[1].type == 'paid'
+        if is_paid:
+            tickets = GiftGiving.query.filter(GiftGiving.compere_id == stream[1].uid,
+                                              GiftGiving.send_time >= start_time,
+                                              GiftGiving.send_time <= stream[1].close_time,
+                                              GiftGiving.prop_id >= 1000).\
+                with_entities(GiftGiving.currency, func.sum(GiftGiving.value)).group_by(GiftGiving.currency).all()
+
+            refunds = Refund.query.filter(Refund.compere_id == stream[0],
+                                          Refund.refund_time >= start_time,
+                                          Refund.refund_time <= refund_limit).\
+                with_entities(Refund.currency, func.sum(Refund.value)).group_by(Refund.currency).all()
+
+            ticket_info = {"vfc": 0, "vcy": 0}
+            refund_info = {"vfc": 0, "vcy": 0}
+
+            for item in tickets:
+                ticket_info[item.currency] += item.value
+
+            for item in refunds:
+                ticket_info[item.currency] -= item.value
+                refund_info[item.currency] += item.value
+        else:
+            ticket_info = None
+            refund_info = None
+
+        kwargs = {
+            "duration": str(duration),
+            "is_interactive": is_interactive,
+            "interactives_info": interactives_info,
+            "interactive_data": interactive_data,
+            "is_paid": is_paid,
+            "ticket_info": ticket_info,
+            "refund_info": refund_info,
+            "room_id": room_id,
+            "start_time": start_time.strftime("%Y-%m-%d %H:%M:%S")
+        }
+
+        return self.render("statistics/live_stream_detail.html", **kwargs)
 
 
-class GiftStatView(ModelView):
-    can_create = False
-    can_edit = False
-    can_delete = False
-    column_display_actions = False
-
+class GiftStatView(AuthenticatedModelView):
     column_list = ("processing_date", "vfc_received", "vcy_received", "presenter_list", "recipient_list")
     column_default_sort = ("processing_date", True)
     column_searchable_list = ("processing_date",)
@@ -313,9 +392,6 @@ class GiftStatView(ModelView):
     }
 
     list_template = "indexed_thumbnail_list.html"
-
-    def is_accessible(self):
-        return current_user.is_authenticated
 
     @expose('/presenter/<id>')
     def presenter_list(self, id):
@@ -463,6 +539,7 @@ class GiftStatView(ModelView):
 
         return self.render("statistics/presenter_detail.html", **kwargs)
 
+    # TODO: bug
     @expose('/recipient/detail/<sid>/<uid>')
     def recipient_detail(self, sid, uid):
         stat = DailyStatistics.query.get(sid)
@@ -487,7 +564,7 @@ class GiftStatView(ModelView):
         } for item in records.items]
 
         def pager_url(p):
-            return url_for(".presenter_detail", page=p+1, sid=sid, uid=uid)
+            return url_for(".recipient_detail", page=p+1, sid=sid, uid=uid)
 
         kwargs = {
             "data": data,

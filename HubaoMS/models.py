@@ -6,6 +6,7 @@ from flask_login import UserMixin
 from sqlalchemy.dialects.postgresql import JSON, UUID, ARRAY
 from sqlalchemy.types import LargeBinary
 
+from utils.functions import hash_sha1
 
 db = SQLAlchemy()
 
@@ -41,6 +42,7 @@ class User(db.Model, UserMixin):
         self.password = self.set_password(password)
         self.email = email
         self.role = role
+        self.auth_key = self.generate_token(username + password)
 
     def is_authenticated(self):
         return True
@@ -64,6 +66,9 @@ class User(db.Model, UserMixin):
         if self.password is None:
             return False
         return check_password_hash(self.password, password)
+
+    def generate_token(self, s):
+        return hash_sha1(s)
 
 
 class Role(db.Model):
@@ -246,8 +251,8 @@ class Banner(db.Model):
     room_id = db.Column(db.Integer, db.ForeignKey('room.rid'))
     room_name = db.Column("room", db.String(64))
     image = db.Column(db.String(256))
-    compere_id = db.Column("compere_id", db.Integer, db.ForeignKey('users.uid'))
-    compere_uuid = db.Column("compereid", UUID)
+    compere_id = db.Column("compere_id", db.Integer)
+    compere_uuid = db.Column("compereid", UUID, db.ForeignKey('users.uuid'))
     login_name = db.Column("compere", db.String(128))
     flag = db.Column(db.String(32))
     position = db.Column("pos", db.Integer)
@@ -335,10 +340,11 @@ class GameStat(db.Model):
     room_id = db.Column(db.Integer, nullable=False)
     compere_id = db.Column(UUID, nullable=False)
     currency = db.Column(db.String(12), nullable=False)
-    amount = db.Column(db.Integer, nullable=False)
+    award = db.Column("amount", db.Integer, nullable=False)
     game_start = db.Column(db.DateTime(timezone=True))
     game_end = db.Column(db.DateTime(timezone=True))
     game_id = db.Column(db.Integer)
+    bet = db.Column(db.Integer)
 
 
 class Refund(db.Model):

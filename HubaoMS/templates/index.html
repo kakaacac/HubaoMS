@@ -1,0 +1,31 @@
+{% extends 'admin/master.html' %}
+{% block head %}
+    {{ super() }}
+    <style>
+        .container, body, html {
+            height: 100%;
+        }
+        .index_body {
+            height: 50%;
+            width: 100%;
+            display: table;
+        }
+        .index_content {
+            text-align: center;
+            display: table-cell;
+            vertical-align: middle;
+        }
+    </style>
+{% endblock %}
+{% block body %}
+<div class="index_body">
+    <div class="index_content">
+        <p>Welcome to HubaoTV administration & management system!</p>
+        {% if authenticated %}
+        <p>Hello <b>{{ current_user }}</b> !</p>
+        {% else %}
+        <p>Please <a href="{{ url_for('login.index') }}">login</a> first!</p>
+        {% endif %}
+    </div>
+</div>
+{% endblock %}
