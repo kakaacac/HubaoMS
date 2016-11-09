@@ -16,7 +16,7 @@ from models import db, AppUser, Feedback, Compere, CompereVerification, Withdraw
 from config import BASE_URL
 
 api = Api(prefix=BASE_URL)
-admin = Admin(name="Hubao TV", template_mode="bootstrap3", url=BASE_URL, index_view=IndexView())
+admin = Admin(name="Hubao TV", template_mode="bootstrap3", index_view=IndexView(url=BASE_URL))
 
 # Common
 api.add_resource(ImageUpload, "/image_upload", endpoint="image_upload")
