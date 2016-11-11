@@ -5,27 +5,51 @@
         .container, body, html {
             height: 100%;
         }
-        .index_body {
-            height: 50%;
+        .index-body {
+            height: 100%;
             width: 100%;
             display: table;
+            font-weight: bold;
         }
-        .index_content {
+        .index-row {
+            display: table-row;
+        }
+        .index-cell {
             text-align: center;
             display: table-cell;
+        }
+        .index-message {
+            height: 40%;
             vertical-align: middle;
+        }
+        .index-changes ul {
+            text-align: left;
+            display: inline-block;
+        }
+        .latest {
+            color: red;
         }
     </style>
 {% endblock %}
 {% block body %}
-<div class="index_body">
-    <div class="index_content">
-        <p>Welcome to HubaoTV administration & management system!</p>
-        {% if authenticated %}
-        <p>Hello <b>{{ current_user }}</b> !</p>
-        {% else %}
-        <p>Please <a href="{{ url_for('login.index') }}">login</a> first!</p>
-        {% endif %}
+<div class="index-body">
+    <div class="index-row">
+        <div class="index-cell index-message">
+            <p>Welcome to HubaoTV administration & management system!</p>
+            {% if authenticated %}
+            <p>Hello <b>{{ current_user }}</b> !</p>
+            {% else %}
+            <p>Please <a href="{{ url_for('login.index') }}">login</a> first!</p>
+            {% endif %}
+        </div>
+    </div>
+    <div class="index-row">
+        <div class="index-cell index-changes">
+            <ul>Recent updates:
+                <li class="latest">Change menu language from English to Chinese</li>
+                <li class="latest">Improve sorting for model view</li>
+            </ul>
+        </div>
     </div>
 </div>
 {% endblock %}

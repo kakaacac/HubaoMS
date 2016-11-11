@@ -1,0 +1,58 @@
+{% extends 'indexed_thumbnail_list.html' %}
+{% block head_css %}
+    {{ super() }}
+<style>
+    #robot-control {
+        overflow: hidden;
+    }
+    #robot-control .btn-group {
+        float: left;
+    }
+    #robot-control span {
+        float: left;
+        padding: 7px 10px;
+    }
+    #model-menu {
+        padding-left: 0;
+    }
+</style>
+{% endblock %}
+{% block model_menu_bar %}
+<div id="model-menu" class="col-sm-9">
+{{ super() }}
+</div>
+<div id="robot-control" class="col-sm-3">
+    <span>机器人</span>
+    <div class="btn-group" role="group">
+        <button type="button" class="btn" id="display-robot">显示</button>
+        <button type="button" class="btn" id="hide-robot">不显示</button>
+    </div>
+</div>
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+<script>
+    function display_robot(){
+        $('#display-robot').removeClass('btn-default').addClass('btn-info');
+        $('#hide-robot').removeClass('btn-info').addClass('btn-default');
+    }
+    function hide_robot(){
+        $('#hide-robot').removeClass('btn-default').addClass('btn-info');
+        $('#display-robot').removeClass('btn-info').addClass('btn-default');
+    }
+
+    if ({{ robot|safe }} == 1) {
+        display_robot();
+    }
+    else {
+        hide_robot();
+    }
+
+    $('#display-robot').click(function(){
+        display_robot();
+    });
+    $('#hide-robot').click(function(){
+        hide_robot();
+    });
+</script>
+{% endblock %}

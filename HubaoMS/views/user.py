@@ -4,8 +4,9 @@ import time
 import requests
 from datetime import datetime, timedelta
 from math import ceil
-from sqlalchemy.sql import func
+from sqlalchemy.sql import func, or_
 from flask import flash, redirect, url_for, request, abort
+from sqlalchemy.orm import joinedload
 from flask_admin import expose
 
 from base import AuthenticatedBaseView, AuthenticatedModelView
@@ -13,13 +14,215 @@ from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
 from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
     format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status
-from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room
-from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN
+from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room, Device
+from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_DEVICE_END, ROBOT_DEVICE_BEGIN
 from utils.functions import is_file_exists, hash_md5
 from utils import redis, netease, job_queue
 
 
-class UserView(AuthenticatedModelView):
+class BaseUserView(AuthenticatedModelView):
+    def get_count_query(self, robot=True):
+        if robot:
+            return super(BaseUserView, self).get_count_query()
+        else:
+            return super(BaseUserView, self).get_count_query().join(Device).\
+                filter(or_(Device.device_id <= ROBOT_DEVICE_BEGIN, Device.device_id >= ROBOT_DEVICE_END))
+
+    def get_query(self, robot=True):
+        if robot:
+            return super(BaseUserView, self).get_query()
+        else:
+            return super(BaseUserView, self).get_query().join(Device).\
+                filter(or_(Device.device_id <= ROBOT_DEVICE_BEGIN, Device.device_id >= ROBOT_DEVICE_END))
+
+    def get_list(self, page, sort_column, sort_desc, search, filters,
+                 execute=True, page_size=None, robot=True):
+        """
+            Return records from the database.
+
+            :param page:
+                Page number
+            :param sort_column:
+                Sort column name
+            :param sort_desc:
+                Descending or ascending sort
+            :param search:
+                Search query
+            :param execute:
+                Execute query immediately? Default is `True`
+            :param filters:
+                List of filter tuples
+            :param page_size:
+                Number of results. Defaults to ModelView's page_size. Can be
+                overriden to change the page_size limit. Removing the page_size
+                limit requires setting page_size to 0 or False.
+        """
+
+        # Will contain join paths with optional aliased object
+        joins = {}
+        count_joins = {}
+
+        query = self.get_query(robot)
+        count_query = self.get_count_query(robot) if not self.simple_list_pager else None
+
+        # Ignore eager-loaded relations (prevent unnecessary joins)
+        # TODO: Separate join detection for query and count query?
+        if hasattr(query, '_join_entities'):
+            for entity in query._join_entities:
+                for table in entity.tables:
+                    joins[table] = None
+
+        # Apply search criteria
+        if self._search_supported and search:
+            query, count_query, joins, count_joins = self._apply_search(query,
+                                                                        count_query,
+                                                                        joins,
+                                                                        count_joins,
+                                                                        search)
+
+        # Apply filters
+        if filters and self._filters:
+            query, count_query, joins, count_joins = self._apply_filters(query,
+                                                                         count_query,
+                                                                         joins,
+                                                                         count_joins,
+                                                                         filters)
+
+        # Calculate number of rows if necessary
+        count = count_query.scalar() if count_query else None
+
+        # Auto join
+        for j in self._auto_joins:
+            query = query.options(joinedload(j))
+
+        # Sorting
+        query, joins = self._apply_sorting(query, joins, sort_column, sort_desc)
+
+        # Pagination
+        query = self._apply_pagination(query, page, page_size)
+
+        # Execute if needed
+        if execute:
+            query = query.all()
+
+        return count, query
+
+    @expose("/")
+    def index_view(self, **kwargs):
+        """
+            List view
+        """
+        start = time.time()
+        if self.can_delete:
+            delete_form = self.delete_form()
+        else:
+            delete_form = None
+
+        # Grab parameters from URL
+        view_args = self._get_list_extra_args()
+
+        # Map column index to column name
+        sort_column = self._get_column_by_idx(view_args.sort)
+        if sort_column is not None:
+            sort_column = sort_column[0]
+
+        display_robot = request.args.get("robot") != "0"
+
+        # Get count and data
+        count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
+                                    view_args.search, view_args.filters,
+                                    robot=display_robot)
+
+        list_forms = {}
+        if self.column_editable_list:
+            for row in data:
+                list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
+
+        # Calculate number of pages
+        if count is not None and self.page_size:
+            num_pages = int(ceil(count / float(self.page_size)))
+        elif not self.page_size:
+            num_pages = 0  # hide pager for unlimited page_size
+        else:
+            num_pages = None  # use simple pager
+
+        # Various URL generation helpers
+        def pager_url(p):
+            # Do not add page number if it is first page
+            if p == 0:
+                p = None
+
+            return self._get_list_url(view_args.clone(page=p))
+
+        def sort_url(column, invert=False):
+            desc = None
+
+            if invert and not view_args.sort_desc:
+                desc = 1
+
+            return self._get_list_url(view_args.clone(sort=column, sort_desc=desc))
+
+        # Actions
+        actions, actions_confirmation = self.get_actions_list()
+
+        clear_search_url = self._get_list_url(view_args.clone(page=0,
+                                                              sort=view_args.sort,
+                                                              sort_desc=view_args.sort_desc,
+                                                              search=None,
+                                                              filters=None))
+        
+        return self.render(
+            self.list_template,
+            data=data,
+            list_forms=list_forms,
+            delete_form=delete_form,
+
+            # List
+            list_columns=self._list_columns,
+            sortable_columns=self._sortable_columns,
+            editable_columns=self.column_editable_list,
+            list_row_actions=self.get_list_row_actions(),
+
+            # Pagination
+            count=count,
+            pager_url=pager_url,
+            num_pages=num_pages,
+            page=view_args.page,
+            page_size=self.page_size,
+
+            # Sorting
+            sort_column=view_args.sort,
+            sort_desc=view_args.sort_desc,
+            sort_url=sort_url,
+
+            # Search
+            search_supported=self._search_supported,
+            clear_search_url=clear_search_url,
+            search=view_args.search,
+
+            # Filters
+            filters=self._filters,
+            filter_groups=self._get_filter_groups(),
+            active_filters=view_args.filters,
+
+            # Actions
+            actions=actions,
+            actions_confirmation=actions_confirmation,
+
+            # Misc
+            enumerate=enumerate,
+            get_pk_value=self.get_pk_value,
+            get_value=self.get_list_value,
+            return_url=self._get_list_url(view_args),
+
+            # Robot
+            robot=1 if display_robot else 0,
+
+            **kwargs
+        )
+
+
+class UserView(BaseUserView):
     column_auto_select_related = True
     column_list = ("uid", "cert.nickname", "display_name", "avatar", "sex", "compere.auth_status", "phone.phone",
                    "cert.created_time", "level", "actions")
@@ -45,7 +248,7 @@ class UserView(AuthenticatedModelView):
                          "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S"),
                          "actions": format_user_action}
 
-    list_template = "indexed_thumbnail_list.html"
+    list_template = "user/user_view.html"
 
     @expose("/gift_giving/<uid>")
     def gift_giving_detail(self, uid):
@@ -96,7 +299,7 @@ class UserView(AuthenticatedModelView):
         def pager_url(p):
             return url_for(".property_info", page=p+1, uid=uid)
 
-        user_property = UserProperty.query.get_or_404(uid)
+        user_property = UserProperty.query.get(uid)
         grass = user_property.vfc if user_property else 0
         bone = user_property.vcy if user_property else 0
         amber = db.session.query(func.sum(GiftGiving.value)).filter_by(compere_id=uid, currency="vcy").one()[0] or 0
@@ -144,7 +347,7 @@ class UserView(AuthenticatedModelView):
 class FeedbackView(AuthenticatedModelView):
     column_auto_select_related = True
     column_list = ("id", "uid", "cert.nickname", "cert.user.display_name", "contact", "body", "created_at", "status", "action")
-    column_default_sort = "id"
+    column_default_sort = ["status", "created_at"]
     column_searchable_list = ("uid", "cert.nickname", "contact", "cert.user.display_name")
     column_sortable_list = ("uid", "cert.nickname", "created_at", "status", "cert.user.display_name")
     column_labels = {
@@ -355,11 +558,11 @@ def unblock_room_job(rid):
             redis.master().hdel("control:block:room", rid)
 
 
-class AccountManagementView(AuthenticatedModelView):
+class AccountManagementView(BaseUserView):
     column_auto_select_related = True
     column_list = ("uid", "cert.nickname", "display_name", "locked", "locked_time", "acc_action",
                    "room.control_flag", "room.disable_time", "room_action")
-    column_default_sort = "uid"
+    column_default_sort = ("locked", True)
     column_searchable_list = ("uid", "cert.nickname", "display_name")
     column_sortable_list = ("uid", "cert.nickname", "locked", "locked_time",
                             "room.control_flag", "room.disable_time", "display_name")
@@ -387,114 +590,9 @@ class AccountManagementView(AuthenticatedModelView):
     # Override index_view function
     @expose('/')
     def index_view(self):
-        """
-            List view
-        """
-        if self.can_delete:
-            delete_form = self.delete_form()
-        else:
-            delete_form = None
-
-        # Grab parameters from URL
-        view_args = self._get_list_extra_args()
-
-        # Map column index to column name
-        sort_column = self._get_column_by_idx(view_args.sort)
-        if sort_column is not None:
-            sort_column = sort_column[0]
-
-        # Get count and data
-        count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
-                                    view_args.search, view_args.filters)
-
-        list_forms = {}
-        if self.column_editable_list:
-            for row in data:
-                list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
-
-        # Calculate number of pages
-        if count is not None and self.page_size:
-            num_pages = int(ceil(count / float(self.page_size)))
-        elif not self.page_size:
-            num_pages = 0  # hide pager for unlimited page_size
-        else:
-            num_pages = None  # use simple pager
-
-        # Various URL generation helpers
-        def pager_url(p):
-            # Do not add page number if it is first page
-            if p == 0:
-                p = None
-
-            return self._get_list_url(view_args.clone(page=p))
-
-        def sort_url(column, invert=False):
-            desc = None
-
-            if invert and not view_args.sort_desc:
-                desc = 1
-
-            return self._get_list_url(view_args.clone(sort=column, sort_desc=desc))
-
-        # Actions
-        actions, actions_confirmation = self.get_actions_list()
-
-        clear_search_url = self._get_list_url(view_args.clone(page=0,
-                                                              sort=view_args.sort,
-                                                              sort_desc=view_args.sort_desc,
-                                                              search=None,
-                                                              filters=None))
-
         # Interaction form
         form = DateSelectForm()
-
-        return self.render(
-            account_form=form,
-            room_form=form,
-
-            template=self.list_template,
-            data=data,
-            list_forms=list_forms,
-            delete_form=delete_form,
-
-            # List
-            list_columns=self._list_columns,
-            sortable_columns=self._sortable_columns,
-            editable_columns=self.column_editable_list,
-            list_row_actions=self.get_list_row_actions(),
-
-            # Pagination
-            count=count,
-            pager_url=pager_url,
-            num_pages=num_pages,
-            page=view_args.page,
-            page_size=self.page_size,
-
-            # Sorting
-            sort_column=view_args.sort,
-            sort_desc=view_args.sort_desc,
-            sort_url=sort_url,
-
-            # Search
-            search_supported=self._search_supported,
-            clear_search_url=clear_search_url,
-            search=view_args.search,
-
-            # Filters
-            filters=self._filters,
-            filter_groups=self._get_filter_groups(),
-            active_filters=view_args.filters,
-
-            # Actions
-            actions=actions,
-            actions_confirmation=actions_confirmation,
-
-            # Misc
-            enumerate=enumerate,
-            get_pk_value=self.get_pk_value,
-            get_value=self.get_list_value,
-            return_url=self._get_list_url(view_args),
-        )
+        return super(AccountManagementView, self).index_view(**{"account_form": form, "room_form": form})
 
     @expose("/block/<uid>")
     def block_account(self, uid):

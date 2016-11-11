@@ -5,8 +5,7 @@ import time
 from collections import OrderedDict
 from flask import request, url_for
 from flask_admin import expose
-from flask_admin.contrib.sqla import tools
-from sqlalchemy.sql import func, and_, or_, expression
+from sqlalchemy.sql import func, and_, or_
 
 from base import AuthenticatedModelView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
@@ -40,154 +39,13 @@ class LiveShowStatView(AuthenticatedModelView):
         "actions": format_live_stat_actions
     }
 
-    extra_sorting = {
-        4: "normal_show + paid_show"
+    column_descriptions = {
+        "total_show": "test desc"
     }
 
-    def _get_sorting_column_by_idx(self, idx):
-        if idx in self.extra_sorting:
-            return self.extra_sorting[idx]
-        else:
-            return super(LiveShowStatView, self)._get_column_by_idx(idx)
-
-    def _apply_sorting(self, query, joins, sort_column, sort_desc):
-        if sort_column is not None:
-            if sort_column in self._sortable_columns:
-                sort_field = self._sortable_columns[sort_column]
-                sort_joins = self._sortable_joins.get(sort_column)
-
-                query, joins = self._order_by(query, joins, sort_joins, sort_field, sort_desc)
-            else:
-                if "+" in sort_column:
-                    sum_columns = [tools.get_field_with_path(self.model, item.strip())[0] for item in sort_column.split('+')]
-                    sum_column = sum_columns[0]
-                    for c in sum_columns[1:]:
-                        sum_column += c
-
-                    if sort_desc:
-                        query = query.order_by(expression.desc(sum_column))
-                    else:
-                        query = query.order_by(sum_column)
-
-        else:
-            order = self._get_default_order()
-
-            if order:
-                sort_field, sort_joins, sort_desc = order
-
-                query, joins = self._order_by(query, joins, sort_joins, sort_field, sort_desc)
-
-        return query, joins
-
-    def is_sortable(self, name):
-        extra_sort = [self._get_column_by_idx(i)[0] for i in self.extra_sorting.keys()]
-        return True if name in extra_sort else super(LiveShowStatView, self).is_sortable(name)
-
-    # Overriding view function for sorting column not in DB table
-    @expose('/')
-    def index_view(self):
-        """
-            List view
-        """
-        if self.can_delete:
-            delete_form = self.delete_form()
-        else:
-            delete_form = None
-
-        # Grab parameters from URL
-        view_args = self._get_list_extra_args()
-
-        # Map column index to column name
-        sort_column = self._get_sorting_column_by_idx(view_args.sort)
-        if sort_column is not None:
-            sort_column = sort_column[0] if isinstance(sort_column, tuple) else sort_column
-
-        # Get count and data
-        count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
-                                    view_args.search, view_args.filters)
-
-        list_forms = {}
-        if self.column_editable_list:
-            for row in data:
-                list_forms[self.get_pk_value(row)] = self.list_form(obj=row)
-
-        # Calculate number of pages
-        if count is not None and self.page_size:
-            num_pages = int(ceil(count / float(self.page_size)))
-        elif not self.page_size:
-            num_pages = 0  # hide pager for unlimited page_size
-        else:
-            num_pages = None  # use simple pager
-
-        # Various URL generation helpers
-        def pager_url(p):
-            # Do not add page number if it is first page
-            if p == 0:
-                p = None
-
-            return self._get_list_url(view_args.clone(page=p))
-
-        def sort_url(column, invert=False):
-            desc = None
-
-            if invert and not view_args.sort_desc:
-                desc = 1
-
-            return self._get_list_url(view_args.clone(sort=column, sort_desc=desc))
-
-        # Actions
-        actions, actions_confirmation = self.get_actions_list()
-
-        clear_search_url = self._get_list_url(view_args.clone(page=0,
-                                                              sort=view_args.sort,
-                                                              sort_desc=view_args.sort_desc,
-                                                              search=None,
-                                                              filters=None))
-
-        return self.render(
-            self.list_template,
-            data=data,
-            list_forms=list_forms,
-            delete_form=delete_form,
-
-            # List
-            list_columns=self._list_columns,
-            sortable_columns=self._sortable_columns,
-            editable_columns=self.column_editable_list,
-            list_row_actions=self.get_list_row_actions(),
-
-            # Pagination
-            count=count,
-            pager_url=pager_url,
-            num_pages=num_pages,
-            page=view_args.page,
-            page_size=self.page_size,
-
-            # Sorting
-            sort_column=view_args.sort,
-            sort_desc=view_args.sort_desc,
-            sort_url=sort_url,
-
-            # Search
-            search_supported=self._search_supported,
-            clear_search_url=clear_search_url,
-            search=view_args.search,
-
-            # Filters
-            filters=self._filters,
-            filter_groups=self._get_filter_groups(),
-            active_filters=view_args.filters,
-
-            # Actions
-            actions=actions,
-            actions_confirmation=actions_confirmation,
-
-            # Misc
-            enumerate=enumerate,
-            get_pk_value=self.get_pk_value,
-            get_value=self.get_list_value,
-            return_url=self._get_list_url(view_args),
-        )
+    extra_sorting = {
+        "total_show": "normal_show + paid_show"
+    }
 
     @expose('/list/<id>')
     def stream_list(self, id):
