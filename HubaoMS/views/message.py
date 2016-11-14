@@ -14,18 +14,8 @@ from utils.functions import json_response, hash_md5
 from utils import netease, job_queue
 
 
-def send_broadcast(message, broadcast_range, tags=None, rooms=None):
-    # To avoid circular import, should be improved later
-    from app import app
-    with app.app_context():
-        if broadcast_range == 'tag':
-            rooms = Room.query.filter(Room.on_air, Room.enable, Room.tags.overlap(tags)).all()
-        elif broadcast_range == 'spec':
-            rooms = Room.query.filter(Room.on_air, Room.enable, Room.rid.in_(rooms)).all()
-        else:
-            rooms = Room.query.filter_by(on_air=True, enable=True).all()
-
-        netease.send_to_chatrooms([item.chatroom for item in rooms], 0, msg=message)
+def send_broadcast(message, rooms):
+    netease.send_to_chatrooms(rooms, 0, msg=message)
 
 
 class BroadcastView(AuthenticatedModelView):
@@ -54,6 +44,16 @@ class BroadcastView(AuthenticatedModelView):
     }
     list_template = "message/broadcast_view.html"
 
+    @staticmethod
+    def get_chatrooms(broadcast_range, value):
+        if broadcast_range == 'tag':
+            rooms = Room.query.filter(Room.on_air, Room.enable, Room.tags.overlap(value)).all()
+        elif broadcast_range == 'spec':
+            rooms = Room.query.filter(Room.on_air, Room.enable, Room.rid.in_(value)).all()
+        else:
+            rooms = Room.query.filter_by(on_air=True, enable=True).all()
+        return [item.chatroom for item in rooms]
+
     @expose('/create')
     def create_broadcast_view(self):
         form = BroadcastEditForm()
@@ -73,9 +73,7 @@ class BroadcastView(AuthenticatedModelView):
             value = [int(v) for v in form.target.data.split(',')] if form.target.data else None
             kwargs = {
                 "message": form.content.data.encode('utf-8'),
-                "broadcast_range": form.range.data,
-                "tags": value,
-                "rooms": value
+                "rooms": self.get_chatrooms(form.range.data, value)
             }
 
             broadcast.id = brdcst_id
@@ -146,9 +144,7 @@ class BroadcastView(AuthenticatedModelView):
             value = [int(v) for v in form.target.data.split(',')] if form.target.data else None
             kwargs = {
                 "message": form.content.data.encode('utf-8'),
-                "broadcast_range": form.range.data,
-                "tags": value,
-                "rooms": value
+                "rooms": self.get_chatrooms(form.range.data, value)
             }
 
             if not broadcast.interrupted:
@@ -219,9 +215,7 @@ class BroadcastView(AuthenticatedModelView):
             value = [int(v) for v in broadcast.target.split(',')] if broadcast.target else None
             kwargs = {
                 "message": broadcast.broadcast_content.encode('utf-8'),
-                "broadcast_range": broadcast.broadcast_range,
-                "tags": value,
-                "rooms": value
+                "rooms": self.get_chatrooms(broadcast.broadcast_range, value)
             }
 
             # Add new job

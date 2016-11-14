@@ -2,6 +2,7 @@
 from apscheduler.jobstores.redis import RedisJobStore
 from apscheduler.jobstores.sqlalchemy import SQLAlchemyJobStore
 from apscheduler.schedulers.background import BackgroundScheduler
+from apscheduler.schedulers.gevent import GeventScheduler
 from multiprocessing import Process
 import time
 from datetime import datetime, timedelta
@@ -15,24 +16,24 @@ def get_redis_jobstore(db=1, jobs_key="apscheduler:jobs", run_times_key="apsched
     return jobstore
 
 
-class JobProcessor(object):
-    def __init__(self, sched, queue):
-        self.sched = sched
-        self.queue = queue
-
-    def process_job(self):
-        job = self.queue.get()
-        print job
-
-    def receive_job(self, freq=1):
-        while 1:
-            while not self.queue.empty():
-                self.process_job()
-            time.sleep(freq)
-
-    def run(self):
-        self.ps = Process(target=self.receive_job)
-        self.ps.start()
+# class JobProcessor(object):
+#     def __init__(self, sched, queue):
+#         self.sched = sched
+#         self.queue = queue
+#
+#     def process_job(self):
+#         job = self.queue.get()
+#         print job
+#
+#     def receive_job(self, freq=1):
+#         while 1:
+#             while not self.queue.empty():
+#                 self.process_job()
+#             time.sleep(freq)
+#
+#     def run(self):
+#         self.ps = Process(target=self.receive_job)
+#         self.ps.start()
 
 
 def normalize_job_start_time(start_time, time_format="%Y-%m-%d %H:%M:%S"):
@@ -53,7 +54,6 @@ def process_job(sched, queue):
         if job["trigger"] == 'interval':
             st = job["job_kwargs"]["start_date"]
             job["job_kwargs"]["start_date"] = normalize_job_start_time(st)
-            print job["job_kwargs"]["start_date"]
         sched.add_job(job["func"], job["trigger"], jobstore='db_jobstore', **job["job_kwargs"])
 
     elif action == "stop":

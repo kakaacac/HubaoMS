@@ -111,7 +111,6 @@ class BannerView(AuthenticatedModelView):
         query_value = request.args.get("value")
 
         if query_key not in ("room_id", "login_name"):
-            print query_key
             return json_response({"error_msg": u"不支持该查询方法"}, 200)
 
         if not query_value:

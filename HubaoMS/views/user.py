@@ -21,6 +21,11 @@ from utils import redis, netease, job_queue
 
 
 class BaseUserView(AuthenticatedModelView):
+    def _get_list_extra_args(self):
+        view_args = super(BaseUserView, self)._get_list_extra_args()
+        view_args.extra_args["robot"] = request.args.get('robot', "1")
+        return view_args
+
     def get_count_query(self, robot=True):
         if robot:
             return super(BaseUserView, self).get_count_query()
@@ -112,7 +117,6 @@ class BaseUserView(AuthenticatedModelView):
         """
             List view
         """
-        start = time.time()
         if self.can_delete:
             delete_form = self.delete_form()
         else:
@@ -126,7 +130,7 @@ class BaseUserView(AuthenticatedModelView):
         if sort_column is not None:
             sort_column = sort_column[0]
 
-        display_robot = request.args.get("robot") != "0"
+        display_robot = view_args.extra_args.get("robot") != "0"
 
         # Get count and data
         count, data = self.get_list(view_args.page, sort_column, view_args.sort_desc,
@@ -162,6 +166,9 @@ class BaseUserView(AuthenticatedModelView):
 
             return self._get_list_url(view_args.clone(sort=column, sort_desc=desc))
 
+        def robot_url(display):
+            return self._get_list_url(view_args.clone(extra_args={"robot":display}))
+
         # Actions
         actions, actions_confirmation = self.get_actions_list()
 
@@ -170,7 +177,7 @@ class BaseUserView(AuthenticatedModelView):
                                                               sort_desc=view_args.sort_desc,
                                                               search=None,
                                                               filters=None))
-        
+
         return self.render(
             self.list_template,
             data=data,
@@ -217,7 +224,7 @@ class BaseUserView(AuthenticatedModelView):
 
             # Robot
             robot=1 if display_robot else 0,
-
+            robot_url=robot_url,
             **kwargs
         )
 
@@ -256,7 +263,7 @@ class UserView(BaseUserView):
             return url_for(".gift_giving_detail", page=p+1, uid=uid)
 
         page = int(request.args.get("page", 1))
-        records = GiftGiving.query.filter_by(uid=uid).paginate(page, PAGE_SIZE, False)
+        records = GiftGiving.query.filter_by(uid=uid).order_by(GiftGiving.send_time).paginate(page, PAGE_SIZE, False)
 
         kwargs = {
             "uid": uid,
@@ -346,7 +353,8 @@ class UserView(BaseUserView):
 
 class FeedbackView(AuthenticatedModelView):
     column_auto_select_related = True
-    column_list = ("id", "uid", "cert.nickname", "cert.user.display_name", "contact", "body", "created_at", "status", "action")
+    column_list = ("id", "uid", "cert.nickname", "cert.user.display_name", "contact", "body", "created_at", "status",
+                   "action")
     column_default_sort = ["status", "created_at"]
     column_searchable_list = ("uid", "cert.nickname", "contact", "cert.user.display_name")
     column_sortable_list = ("uid", "cert.nickname", "created_at", "status", "cert.user.display_name")
@@ -360,9 +368,13 @@ class FeedbackView(AuthenticatedModelView):
         "action": u"操作",
         "cert.user.display_name": u"用户昵称"
     }
-    column_formatters = {"status": lambda v, c, m, n: u"是" if m.status else colorize(u"否", "red"),
-                         "created_at": lambda v, c, m, n: m.created_at.strftime("%Y-%m-%d %H:%M:%S"),
-                         "action": lambda v, c, m, n: button([(u"设为已处理", url_for("feedback.process", fid=m.id))]) if m.status == 0 else None}
+    column_formatters = {
+        "status": lambda v, c, m, n: u"是" if m.status else colorize(u"否", "red"),
+        "created_at": lambda v, c, m, n: m.created_at.strftime("%Y-%m-%d %H:%M:%S"),
+        "action": lambda v, c, m, n: button(
+            [(u"设为已处理", url_for("feedback.process", fid=m.id, **request.args))]
+        ) if m.status == 0 else None
+    }
 
     @expose("/process/<fid>")
     def process(self, fid):
@@ -370,7 +382,7 @@ class FeedbackView(AuthenticatedModelView):
         feedback.status = 1
         db.session.commit()
         flash(u"操作成功", category="info")
-        return redirect(url_for("feedback.index_view"))
+        return redirect(url_for("feedback.index_view", **request.args))
 
 
 class TaskView(AuthenticatedBaseView):
@@ -379,9 +391,6 @@ class TaskView(AuthenticatedBaseView):
                  menu_class_name=None, menu_icon_type=None, menu_icon_value=None):
         super(TaskView, self).__init__(name, category, endpoint, url, static_folder, static_url_path,
                                        menu_class_name, menu_icon_type, menu_icon_value)
-
-        with open(TASK_CONFIG) as f:
-            self.tasks = json.load(f)
 
         self.vc_options = [("vfc", u"二级货币"), ("vcy", u"一级货币")]
         self.prop_options = [
@@ -393,20 +402,25 @@ class TaskView(AuthenticatedBaseView):
             ("6", u"时光鸡")
         ]
 
+    def load_tasks(self):
+        with open(TASK_CONFIG) as f:
+            return json.load(f)
+
     @expose('/')
     def task_list(self):
-        for i, task in enumerate(self.tasks):
+        tasks = self.load_tasks()
+        for i, task in enumerate(tasks):
             award_info = task["prize"].split(":")
-            self.tasks[i].update({
+            tasks[i].update({
                 "award_type": award_info[0],
                 "currency": award_info[1],
                 "amount": award_info[2]
             })
-        return self.render("user/task.html", data=self.tasks)
+        return self.render("user/task.html", data=tasks)
 
     @expose('/edit/<task_id>', methods=["GET",])
     def task_edit_view(self, task_id):
-        tasks = reduce(lambda x, y: x.update({y.get("task_id"):y}) or x, self.tasks, {})
+        tasks = reduce(lambda x, y: x.update({y.get("task_id"):y}) or x, self.load_tasks(), {})
         task = tasks.get(task_id)
         if task is None:
             abort(404)
@@ -416,7 +430,8 @@ class TaskView(AuthenticatedBaseView):
         form.task_name.data = task["task"]
         form.task_desc.data = task["task_desc"]
         form.award_type.data = award_info[0]
-        form.award_amount.data = award_info[2]
+        form.award_amount.data = award_info[2] if award_info[2] != "rand" else ""
+        form.random.data = award_info[2] == "rand"
         form.img_url.data = task["img"]
         form.display.data = task["display"]
         form.task_type.data = task["task_type"].lower()
@@ -454,13 +469,12 @@ class TaskView(AuthenticatedBaseView):
                     task["display"] = form.display.data
                     task["prize"] = ":".join([form.award_type.data,
                                               request.form["award_currency"],
-                                              "{:4f}".format(form.award_amount.data).rstrip('0').rstrip('.')])
+                                              "rand" if form.random.data
+                                              else "{:4f}".format(form.award_amount.data).rstrip('0').rstrip('.')])
                     break
 
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
-
-        self.tasks = task_info
 
         flash(u"修改成功", category="info")
         return redirect(url_for(".task_list"))
@@ -510,8 +524,6 @@ class TaskView(AuthenticatedBaseView):
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
 
-        self.tasks = task_info
-
         flash(u"任务添加成功", category="info")
         return redirect(url_for(".task_list"))
 
@@ -526,8 +538,6 @@ class TaskView(AuthenticatedBaseView):
 
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
-
-        self.tasks = task_info
 
         flash(u"删除成功", category="info")
         return redirect(url_for(".task_list"))
@@ -562,7 +572,7 @@ class AccountManagementView(BaseUserView):
     column_auto_select_related = True
     column_list = ("uid", "cert.nickname", "display_name", "locked", "locked_time", "acc_action",
                    "room.control_flag", "room.disable_time", "room_action")
-    column_default_sort = ("locked", True)
+    column_default_sort = [("locked", True), ("room.control_flag", True)]
     column_searchable_list = ("uid", "cert.nickname", "display_name")
     column_sortable_list = ("uid", "cert.nickname", "locked", "locked_time",
                             "room.control_flag", "room.disable_time", "display_name")

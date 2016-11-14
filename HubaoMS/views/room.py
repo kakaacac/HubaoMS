@@ -17,7 +17,7 @@ class RoomView(AuthenticatedModelView):
         "user.cert.nickname": u"登录名",
         "channel": u"频道分类",
         "name": u"房间名",
-        "bulletin": u"房间公告",
+        "bulletin": u"主播签名",
         "enable": u"能否直播",
         "on_air": u"直播中",
         "created_time": u"创建时间",

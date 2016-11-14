@@ -7,7 +7,7 @@ from flask import request, url_for
 from flask_admin import expose
 from sqlalchemy.sql import func, and_, or_
 
-from base import AuthenticatedModelView
+from base import AuthenticatedModelView, AuthenticatedBaseView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
     Room
 from config import ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
@@ -436,3 +436,11 @@ class GiftStatView(AuthenticatedModelView):
 
         return self.render("statistics/recipient_detail.html", **kwargs)
 
+
+class InteractiveGameStatView(AuthenticatedBaseView):
+    def get_list(self):
+        STATS = db.session.query(DailyStatistics.processing_date)
+
+    @expose("/")
+    def index_view(self):
+        pass

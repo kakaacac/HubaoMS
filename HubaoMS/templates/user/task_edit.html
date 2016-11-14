@@ -23,8 +23,17 @@
         <div class="col-xs-4">
             <div class="form-group"><select class="form-control" id="award_currency" name="award_currency"></select></div>
         </div>
-        <div class="col-xs-4">
-            <div class="form-group">{{ form.award_amount(class="form-control") }}</div>
+        <div class="col-xs-3">
+            <div class="form-group">
+                {% if form.random.data %}
+                {{ form.award_amount(class="form-control", placeholder="数量", disabled=True) }}
+                {% else %}
+                {{ form.award_amount(class="form-control", placeholder="数量") }}
+                {% endif %}
+            </div>
+        </div>
+        <div class="col-xs-1">
+            <div class="checkbox"><label>{{ form.random }}随机</label></div>
         </div>
     </div>
 
@@ -109,5 +118,9 @@
     $('#img').on('change', function(){
         $('#upload_btn').prop('disabled', ($('#img').val() == ''));
     })
+
+    $('#random').change(function(){
+        $('#award_amount').prop('disabled', $('#random').prop('checked')).val('');
+    });
 </script>
 {% endblock %}

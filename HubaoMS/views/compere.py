@@ -51,7 +51,6 @@ class CompereView(AuthenticatedModelView):
                           GiftGiving.prop_id, GiftGiving.qty, GiftGiving.value, GiftGiving.currency,
                           GiftGiving.send_time).\
             paginate(page, PAGE_SIZE, False)
-        print records
 
         kwargs = {
             "data": records.items,
@@ -182,7 +181,7 @@ class CompereConf(AuthenticatedBaseView):
     def compere_configuration(self):
         form = CompereConfigurationForm()
         if request.method == "POST":
-            redis.master().hset('conf','check_required', True if form.conf.data == "1" else False)
+            redis.master().hset('conf','check_required', "true" if form.conf.data == "1" else "false")
             flash(u"修改成功", category="info")
             return redirect(url_for(".compere_configuration"))
         else:

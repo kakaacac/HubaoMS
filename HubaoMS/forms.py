@@ -1,12 +1,14 @@
 # -*- coding: utf-8 -*-
-from datetime import datetime, timedelta
 from flask_wtf import Form
 from wtforms import HiddenField, StringField, PasswordField, SubmitField,\
     TextAreaField, SelectField, FloatField, IntegerField, BooleanField
 from wtforms.fields.html5 import DateTimeField
-from wtforms.validators import DataRequired, Optional, NumberRange, ValidationError
+from wtforms.validators import Optional, NumberRange
 from flask_admin.form import ImageUploadField
 from flask_admin.form.widgets import DateTimePickerWidget
+
+from utils.validators import *
+
 
 class LoginForm(Form):
     hidden = HiddenField()
@@ -21,11 +23,12 @@ class TaskEditForm(Form):
     task_name = StringField(label=u"任务名称", validators=[DataRequired(),])
     task_desc = TextAreaField(label=u"任务描述")
     award_type = SelectField(label=u"任务奖励", choices=[("vc", u"虚拟货币"), ("prop", u"道具")])
-    award_amount = FloatField(validators=[DataRequired(),])
+    award_amount = FloatField(validators=[AwardAmount(),])
+    random = BooleanField(label=u"随机")
     img_url = StringField(label=u"图片地址", render_kw={"readonly":True})
     img = ImageUploadField()
     help_msg = u"仅支持 gif, jpg, jpeg, png, tiff 格式"
-    display = SelectField(label=u"显示 or 隐藏", choices=[("display", u"显示"), ("hide", u"隐藏")])
+    display = SelectField(label=u"显示 or 隐藏", choices=[("block", u"显示"), ("none", u"隐藏")])
     task_type = SelectField(label=u"任务类型", choices=[("onlyone", u"只能领取一次"), ("everyday", u"每天可领一次")])
     save = SubmitField(label=u"保存")
     cancel = SubmitField(label=u"取消")
@@ -44,7 +47,8 @@ class BannerEditForm(Form):
     img_url = StringField(label=u"图片地址", render_kw={"readonly":True}, validators=[DataRequired(),])
     img = ImageUploadField()
     help_msg = u"仅支持 gif, jpg, jpeg, png, tiff 格式"
-    position = SelectField(label=u"位置", choices=[("0", u"首页"), ("1", u"互动"), ("2", u"热播")], validators=[DataRequired(),])
+    position = SelectField(label=u"位置", choices=[("0", u"首页"), ("1", u"互动"), ("2", u"热播")],
+                           validators=[DataRequired(),])
     room_id = StringField(label=u"房间 ID", render_kw={"readonly":True}, validators=[DataRequired(),])
     room_name = StringField(label=u"房间名称", render_kw={"readonly":True}, validators=[DataRequired(),])
     login_name = StringField(label=u"主播登录名", render_kw={"readonly":True}, validators=[DataRequired(),])
@@ -62,24 +66,16 @@ class DateSelectForm(Form):
     custom = IntegerField(label=u"自定义日期", validators=[Optional(), NumberRange(min=1)])
 
 
-def validate_end_time(form, field):
-    if field.data < form.start_time.data or field.data + timedelta(seconds=30) < datetime.now():
-        raise ValidationError("Invalid end time")
-
-
-def validate_target(form, field):
-    if form.range.data != 'all' and not field.data:
-        raise ValidationError("Target cannot be empty")
-
-
 class BroadcastEditForm(Form):
     hidden = HiddenField()
     content = TextAreaField(label=u"广播内容")
-    start_time = DateTimeField(label=u"生效时间", default=datetime.now, validators=[DataRequired(),], widget=DateTimePickerWidget())
-    end_time = DateTimeField(label=u"结束时间", default=datetime.now, validators=[DataRequired(), validate_end_time], widget=DateTimePickerWidget())
+    start_time = DateTimeField(label=u"生效时间", default=datetime.now, validators=[DataRequired(),],
+                               widget=DateTimePickerWidget())
+    end_time = DateTimeField(label=u"结束时间", default=datetime.now, validators=[DataRequired(), Endtime()],
+                             widget=DateTimePickerWidget())
     interval = IntegerField(label=u"广播间隔", validators=[DataRequired(), NumberRange(min=1)], default=60)
     range = SelectField(label=u"范围", choices=[("all", u"全部"), ("tag", u"分类"), ("spec", u"指定")], default="all")
-    target = TextAreaField(label=u"目标", validators=[validate_target,])
+    target = TextAreaField(label=u"目标", validators=[BroadcastTarget(),])
     save = SubmitField(label=u"保存")
     cancel = SubmitField(label=u"取消")
 
