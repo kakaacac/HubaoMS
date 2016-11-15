@@ -10,7 +10,7 @@ from views.room import RoomView
 from views.content import BannerView, RoomTagsView
 from views.common import ImageUpload
 from views.message import BroadcastView
-from views.statistics import LiveShowStatView, GiftStatView
+from views.statistics import LiveShowStatView, GiftStatView, InteractiveGameStatView
 from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, \
     Broadcast, RoomTags, DailyStatistics
 from config import BASE_URL
@@ -63,6 +63,8 @@ admin.add_view(LiveShowStatView(name=u"直播统计", category=u"统计数据", 
 admin.add_view(GiftStatView(name=u"礼物统计", category=u"统计数据", endpoint="gift_statistics",
                             session=db.session, model=DailyStatistics,
                             menu_icon_type='glyph', menu_icon_value='glyphicon-gift'))
+admin.add_view(InteractiveGameStatView(name=u"互动统计", category=u"统计数据", endpoint="inter_statistics",
+                                       menu_icon_type='glyph', menu_icon_value='glyphicon-knight'))
 
 # Auth
 admin.add_view(LoginView(name=u"登录", category=u"管理", endpoint='login',

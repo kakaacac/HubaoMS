@@ -615,7 +615,7 @@ class AccountManagementView(BaseUserView):
             user.locked_time = datetime.now()
             db.session.commit()
             flash(u"封停成功", category="warning")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @expose("/unblock/<uid>")
     def unblock_account(self, uid):
@@ -625,10 +625,10 @@ class AccountManagementView(BaseUserView):
             db.session.commit()
             redis.master().hdel("control:block:account", user.uuid.replace("-", ""))
             flash(u"解封成功", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
         else:
             flash(u"用户未被封禁", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @expose("/suspend_room/<rid>")
     def suspend_room(self, rid):
@@ -657,10 +657,10 @@ class AccountManagementView(BaseUserView):
                 flash(u"勒令整改成功", category="warning")
             else:
                 flash(u"操作失败", category="error")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @expose("/block_room/<rid>")
     def block_room(self, rid):
@@ -680,10 +680,10 @@ class AccountManagementView(BaseUserView):
             room.disable_time = datetime.now()
             db.session.commit()
             flash(u"封停成功", category="warning")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @expose("/unblock_room/<rid>")
     def unblock_room(self, rid):
@@ -700,14 +700,14 @@ class AccountManagementView(BaseUserView):
             db.session.commit()
             redis.master().hdel("control:block:room", rid)
             flash(u"解封成功", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @expose("/temporary_block/<uid>", methods=['POST',])
     def temporary_block_account(self, uid):
         user = AppUser.query.get_or_404(uid)
         if user.locked:
             flash(u"用户已被封禁", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
         else:
             form = DateSelectForm()
             if form.validate_on_submit():
@@ -738,10 +738,10 @@ class AccountManagementView(BaseUserView):
                 db.session.commit()
 
                 flash(u"封停成功", category="warning")
-                return redirect(url_for("account.index_view"))
+                return redirect(url_for("account.index_view", **request.args))
             else:
                 flash(u"数据输入有误，操作失败", category="error")
-                return redirect(url_for("account.index_view"))
+                return redirect(url_for("account.index_view", **request.args))
 
     @expose("/temporary_block_room/<rid>", methods=['POST',])
     def temporary_block_room(self, rid):
@@ -784,13 +784,13 @@ class AccountManagementView(BaseUserView):
                 })
 
                 flash(u"封停成功", category="warning")
-                return redirect(url_for("account.index_view"))
+                return redirect(url_for("account.index_view", **request.args))
             else:
                 flash(u"数据输入有误，操作失败", category="error")
-                return redirect(url_for("account.index_view"))
+                return redirect(url_for("account.index_view", **request.args))
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
 
     @staticmethod
     def send_block_room_msg(chatroom_id, status):

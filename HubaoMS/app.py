@@ -6,7 +6,7 @@ from datetime import timedelta
 from flask import Flask, send_from_directory
 
 from config import USER, PASSWORD, HOST, PORT, DATABASE, SOCKET_TIMEOUT, REDIS_SETTINGS, REDIS_SENTINELS, \
-    STATIC_BASE_URL, DEBUG, REMEMBER_DURATION
+    STATIC_BASE_URL, DEBUG, REMEMBER_DURATION, URL_SCHEME
 from models import db
 from utils.login_manager import login_manager
 from utils import redis, integrated_redis
@@ -19,6 +19,7 @@ app = Flask(__name__, static_url_path=STATIC_BASE_URL)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://{un}:{pw}@{h}:{p}/{db}".format(
     un=USER, pw=PASSWORD, h=HOST, p=PORT, db=DATABASE
 )
+app.config["PREFERRED_URL_SCHEME"] = URL_SCHEME
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
 app.config["SOCKET_TIMEOUT"] = SOCKET_TIMEOUT
 app.config["REDIS_SENTINELS"] = REDIS_SENTINELS

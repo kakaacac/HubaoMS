@@ -5,7 +5,7 @@ import time
 from collections import OrderedDict
 from flask import request, url_for
 from flask_admin import expose
-from sqlalchemy.sql import func, and_, or_
+from sqlalchemy.sql import func, and_, or_, expression
 
 from base import AuthenticatedModelView, AuthenticatedBaseView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
@@ -439,8 +439,22 @@ class GiftStatView(AuthenticatedModelView):
 
 class InteractiveGameStatView(AuthenticatedBaseView):
     def get_list(self):
-        STATS = db.session.query(DailyStatistics.processing_date)
+        page = int(request.args.get("page", 1))
+        STATS = db.session.query(DailyStatistics.id, DailyStatistics.processing_date)\
+            .order_by(expression.desc(DailyStatistics.processing_date))\
+            .offset((page - 1)*self.page_size).limit(self.page_size).cte("STATS")
+
+        query_result = db.session.query(STATS.c.id, STATS.c.processing_date, GameStat.game_id, GameStat.currency,
+                                        func.coalesce(func.sum(GameStat.award), 0),
+                                        func.coalesce(func.sum(GameStat.bet), 0), func.count()).\
+            join(GameStat, STATS.c.processing_date == func.date(GameStat.game_start)).\
+            group_by(STATS.c.id, STATS.c.processing_date, GameStat.game_id, GameStat.currency).all()
+
+        data = reduce(lambda x, y: x.update({y[0]: y[1:]}) or x, query_result, {})
+
+        return data
 
     @expose("/")
     def index_view(self):
-        pass
+        print self.get_list()
+        return "test"

@@ -7,6 +7,12 @@ from sqlalchemy.sql import expression
 
 
 class AuthenticatedBaseView(BaseView):
+    # Various settings
+    page_size = 20
+    """
+        Default page size for pagination.
+    """
+
     def is_accessible(self):
         return current_user.is_authenticated
 

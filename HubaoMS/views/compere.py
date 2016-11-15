@@ -119,7 +119,7 @@ class CompereVerificationView(AuthenticatedModelView):
         ver.status = True
         db.session.commit()
         flash(u"审核已通过", category="info")
-        return redirect(url_for(".index_view"))
+        return redirect(url_for(".index_view", **request.args))
 
     @expose('/<vid>/reject')
     def verification_fail(self, vid):
@@ -127,7 +127,7 @@ class CompereVerificationView(AuthenticatedModelView):
         ver.status = False
         db.session.commit()
         flash(u"审核已拒绝", category="warning")
-        return redirect(url_for(".index_view"))
+        return redirect(url_for(".index_view", **request.args))
 
 
 class Withdrawal(AuthenticatedModelView):
@@ -164,7 +164,7 @@ class Withdrawal(AuthenticatedModelView):
         wd.status = 2
         db.session.commit()
         flash(u"提现申请已通过", category="info")
-        return redirect(url_for(".index_view"))
+        return redirect(url_for(".index_view", **request.args))
 
     @expose('/<wid>/reject')
     def withdrawal_fail(self, wid):
@@ -173,7 +173,7 @@ class Withdrawal(AuthenticatedModelView):
         wd.deal_time = int(time.time())
         db.session.commit()
         flash(u"提现申请已拒绝", category="warning")
-        return redirect(url_for(".index_view"))
+        return redirect(url_for(".index_view", **request.args))
 
 
 class CompereConf(AuthenticatedBaseView):

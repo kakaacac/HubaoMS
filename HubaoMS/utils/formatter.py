@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from datetime import datetime
-from flask import Markup, url_for
+from flask import Markup, url_for, request
 
 from html_element import colorize, button
 from utils import redis
@@ -61,30 +61,30 @@ def format_room_status(view, context, model, name):
 
 def format_account_action(view, context, model, name):
     if model.locked:
-        return button([(u"解封", url_for("account.unblock_account", uid=model.uid))])
+        return button([(u"解封", url_for("account.unblock_account", uid=model.uid, **request.args))])
     else:
-        return button([(u"封停", url_for("account.block_account", uid=model.uid))]) + \
+        return button([(u"封停", url_for("account.block_account", uid=model.uid, **request.args))]) + \
                Markup(u'<a tabindex="0" class="btn btn-default account-block" role="button" '
                       u'data-toggle="popover" title="选择时间" data-action="{}">定时封停</a>'.
-                      format(url_for("account.temporary_block_account", uid=model.uid)))
+                      format(url_for("account.temporary_block_account", uid=model.uid, **request.args)))
 
 
 def format_room_action(view, context, model, name):
     if model.room:
         if model.room.enable:
             if model.room.control_flag == 0:
-                return button([(u"封停", url_for("account.block_room", rid=model.room.rid))]) + \
+                return button([(u"封停", url_for("account.block_room", rid=model.room.rid, **request.args))]) + \
                        Markup(u'<a tabindex="0" class="btn btn-default room-block" role="button" '
                               u'data-toggle="popover" title="选择时间" data-action="{}">定时封停</a>'.
-                              format(url_for("account.temporary_block_room", rid=model.room.rid))) + \
-                       button([(u"整改", url_for("account.suspend_room", rid=model.room.rid))])
+                              format(url_for("account.temporary_block_room", rid=model.room.rid, **request.args))) + \
+                       button([(u"整改", url_for("account.suspend_room", rid=model.room.rid, **request.args))])
             else:
-                return button([(u"封停", url_for("account.block_room", rid=model.room.rid))]) + \
+                return button([(u"封停", url_for("account.block_room", rid=model.room.rid, **request.args))]) + \
                        Markup(u'<a tabindex="0" class="btn btn-default room-block" role="button" '
                               u'data-toggle="popover" title="选择时间" data-action="{}">定时封停</a>'.
-                              format(url_for("account.temporary_block_room", rid=model.room.rid)))
+                              format(url_for("account.temporary_block_room", rid=model.room.rid, **request.args)))
         else:
-            return button([(u"解封", url_for("account.unblock_room", rid=model.room.rid))])
+            return button([(u"解封", url_for("account.unblock_room", rid=model.room.rid, **request.args))])
 
 
 def format_user_action(view, context, model, name):
@@ -112,9 +112,9 @@ def format_verification_status(view, context, model, name):
 def format_verification_actions(view, context, model, name):
     return button([
         (u'<span class="glyphicon glyphicon-ok" title="通过"></span>',
-         url_for("verification.verification_pass", vid=model.ccid), 'pass-btn'),
+         url_for("verification.verification_pass", vid=model.ccid, **request.args), 'pass-btn'),
         (u'<span class="glyphicon glyphicon-remove" title="拒绝"></span>',
-         url_for("verification.verification_fail", vid=model.ccid), 'reject-btn')
+         url_for("verification.verification_fail", vid=model.ccid, **request.args), 'reject-btn')
     ], btn_class="", vertical=True) if model.status is None else ""
 
 
@@ -130,9 +130,9 @@ def format_withdrawal_status(view, context, model, name):
 def format_withdrawal_actions(view, context, model, name):
     return button([
         (u'<span class="glyphicon glyphicon-ok" title="同意"></span>',
-         url_for("withdrawal.withdrawal_pass", wid=model.id), 'pass-btn'),
+         url_for("withdrawal.withdrawal_pass", wid=model.id, **request.args), 'pass-btn'),
         (u'<span class="glyphicon glyphicon-remove" title="拒绝"></span>',
-         url_for("withdrawal.withdrawal_fail", wid=model.id), 'reject-btn')
+         url_for("withdrawal.withdrawal_fail", wid=model.id, **request.args), 'reject-btn')
     ], btn_class="", vertical=True) if model.status == 1 else ""
 
 
@@ -194,12 +194,12 @@ def format_broadcast_actions(view, context, model, name):
         if model.interrupted:
             return button([
                 (u"修改", url_for("broadcast.edit_broadcast_view", id=model.id)),
-                (u"重新启动", url_for("broadcast.restart_broadcast", id=model.id), 'restart-btn'),
+                (u"重新启动", url_for("broadcast.restart_broadcast", id=model.id, **request.args), 'restart-btn'),
             ], btn_class="btn btn-default btn-sm")
         else:
             return button([
                 (u"修改", url_for("broadcast.edit_broadcast_view", id=model.id)),
-                (u"停止", url_for("broadcast.stop_broadcast", id=model.id), 'stop-btn'),
+                (u"停止", url_for("broadcast.stop_broadcast", id=model.id, **request.args), 'stop-btn'),
             ], btn_class="btn btn-default btn-sm")
     return ""
 

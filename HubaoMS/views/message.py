@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask_admin import expose
-from flask import url_for, flash, redirect
+from flask import url_for, flash, redirect, request
 import time
 from datetime import datetime
 import random
@@ -200,7 +200,7 @@ class BroadcastView(AuthenticatedModelView):
             broadcast.interrupted = True
             db.session.commit()
             flash(u"停止广播成功", category="info")
-            return redirect(url_for(".index_view"))
+            return redirect(url_for(".index_view", **request.args))
 
     @expose('/restart/<id>')
     def restart_broadcast(self, id):
@@ -236,7 +236,7 @@ class BroadcastView(AuthenticatedModelView):
             db.session.commit()
 
             flash(u"重新启动广播成功", category="info")
-            return redirect(url_for(".index_view"))
+            return redirect(url_for(".index_view", **request.args))
 
     @expose('/tags')
     def get_tags(self):
