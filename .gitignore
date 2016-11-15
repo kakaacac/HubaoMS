@@ -41,3 +41,5 @@ config.py
 HubaoMS/resource/
 HubaoMS/static/
 gunicorn.conf
+
+hbms.sh
