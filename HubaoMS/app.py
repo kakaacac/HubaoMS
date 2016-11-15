@@ -32,12 +32,12 @@ app.secret_key = "test"
 # def page_not_found(e):
 #     return render_template('error/404.html', admin_base_template=admin.base_template), 404
 
-@app.before_request
-def before_request():
-    if URL_SCHEME == "https":
-        if request.url.startswith('http://'):
-            url = request.url.replace('http://', 'https://', 1)
-            return redirect(url, code=301)
+# @app.before_request
+# def before_request():
+#     if URL_SCHEME == "https":
+#         if request.url.startswith('http://'):
+#             url = request.url.replace('http://', 'https://', 1)
+#             return redirect(url, code=301)
 
 @app.route('/favicon.ico')
 def favicon():
