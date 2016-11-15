@@ -6,7 +6,6 @@ from flask_login import login_user, logout_user, current_user
 from models import db, User
 from forms import LoginForm
 from views.base import AuthenticatedBaseView
-from config import URL_SCHEME
 
 class LoginView(BaseView):
     def is_accessible(self):
@@ -27,12 +26,12 @@ class LoginView(BaseView):
             user, authenticated = User.query.authenticate(form.username.data, form.password.data)
             if user and authenticated:
                 login_user(user, remember=form.remember.data)
-                return redirect(url_for("user.index_view", _external=True, _scheme=URL_SCHEME))
+                return redirect(url_for("user.index_view"))
             else:
                 flash("Invalid auth info", category="error")
-                return redirect(url_for(".index", _external=True, _scheme=URL_SCHEME))
+                return redirect(url_for(".index"))
         flash("Invalid Input!", category="error")
-        return redirect(url_for(".index", _external=True, _scheme=URL_SCHEME))
+        return redirect(url_for(".index"))
 
     @expose('/reg', methods=["POST"])
     def register(self):

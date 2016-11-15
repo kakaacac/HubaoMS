@@ -5,7 +5,6 @@ from flask_admin.contrib.sqla import ModelView, tools
 from flask_login import current_user
 from sqlalchemy.sql import expression
 
-from config import URL_SCHEME
 
 class AuthenticatedBaseView(BaseView):
     # Various settings
@@ -19,7 +18,7 @@ class AuthenticatedBaseView(BaseView):
 
     def inaccessible_callback(self, name, **kwargs):
         flash(u"请先登录", category='error')
-        return redirect(url_for("login.index", _external=True, _scheme=URL_SCHEME))
+        return redirect(url_for("login.index"))
 
 
 class AuthenticatedModelView(ModelView, AuthenticatedBaseView):
