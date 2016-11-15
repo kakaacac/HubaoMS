@@ -5,18 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e9ce7112-8c95-4496-9439-35cb152307fe" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/HubaoMS/templates/statistics/interactives_stat.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/app.py" afterPath="$PROJECT_DIR$/HubaoMS/app.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/manage.py" afterPath="$PROJECT_DIR$/HubaoMS/manage.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/index.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/user/recharge_detail.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/user/recharge_detail.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/utils/formatter.py" afterPath="$PROJECT_DIR$/HubaoMS/utils/formatter.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/auth.py" afterPath="$PROJECT_DIR$/HubaoMS/views/auth.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/base.py" afterPath="$PROJECT_DIR$/HubaoMS/views/base.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/compere.py" afterPath="$PROJECT_DIR$/HubaoMS/views/compere.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/message.py" afterPath="$PROJECT_DIR$/HubaoMS/views/message.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/statistics.py" afterPath="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/user.py" afterPath="$PROJECT_DIR$/HubaoMS/views/user.py" />
     </list>
     <ignored path="HubaoMS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -83,11 +73,35 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="base.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HubaoMS/views/base.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="21" column="81" selection-start-line="21" selection-start-column="81" selection-end-line="21" selection-end-column="81" />
+              <folding>
+                <element signature="e#24#66#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="auth.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/views/auth.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="32" column="17" selection-start-line="32" selection-start-column="17" selection-end-line="32" selection-end-column="17" />
+              <caret line="34" column="26" selection-start-line="34" selection-start-column="26" selection-end-line="34" selection-end-column="26" />
+              <folding>
+                <element signature="e#24#64#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="helpers.py" pinned="false" current-in-tab="true">
+        <entry file="file://D:/Python27/Lib/site-packages/flask/helpers.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.85">
+              <caret line="253" column="78" selection-start-line="253" selection-start-column="22" selection-end-line="253" selection-end-column="78" />
               <folding />
             </state>
           </provider>
@@ -115,20 +129,10 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="interactives_stat.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HubaoMS/templates/statistics/interactives_stat.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="2.6774194">
-              <caret line="1" column="20" selection-start-line="1" selection-start-column="20" selection-end-line="1" selection-end-column="20" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
-      <file leaf-file-name="app.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="app.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/app.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.5147059">
+            <state vertical-scroll-proportion="0.0">
               <caret line="21" column="47" selection-start-line="21" selection-start-column="47" selection-end-line="21" selection-end-column="47" />
               <folding>
                 <element signature="e#24#38#0" expanded="true" />
@@ -165,7 +169,6 @@
         <option value="$PROJECT_DIR$/HubaoMS/templates/auth/logout.html" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/login_manager.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/auth/login.html" />
-        <option value="$PROJECT_DIR$/HubaoMS/views/auth.py" />
         <option value="$PROJECT_DIR$/HubaoMS/models.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_list.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" />
@@ -187,7 +190,6 @@
         <option value="$PROJECT_DIR$/HubaoMS/views/compere.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/formatter.py" />
         <option value="$PROJECT_DIR$/HubaoMS/views/message.py" />
-        <option value="$PROJECT_DIR$/HubaoMS/views/base.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/recharge_detail.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/interactives_stat.html" />
         <option value="$PROJECT_DIR$/HubaoMS/manage.py" />
@@ -195,6 +197,8 @@
         <option value="F:/Jayden/projects/test.py" />
         <option value="$PROJECT_DIR$/HubaoMS/config.py" />
         <option value="$PROJECT_DIR$/HubaoMS/app.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/views/base.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/views/auth.py" />
       </list>
     </option>
   </component>
@@ -607,7 +611,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12434141" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -647,13 +651,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://D:/Python27/Lib/site-packages/sqlalchemy/sql/elements.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.03102962">
-          <caret line="3653" column="27" selection-start-line="3653" selection-start-column="22" selection-end-line="3653" selection-end-column="27" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://D:/Python27/Lib/site-packages/sqlalchemy/orm/query.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.5895628">
@@ -940,14 +937,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/base.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="5" column="0" selection-start-line="5" selection-start-column="0" selection-end-line="5" selection-end-column="37" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/templates/thumbnail_list.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-1.1612903">
@@ -1008,16 +997,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/common.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="46" column="40" selection-start-line="46" selection-start-column="40" selection-end-line="46" selection-end-column="40" />
-          <folding>
-            <element signature="e#24#38#0" expanded="true" />
-          </folding>
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/manage.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -1025,14 +1004,6 @@
           <folding>
             <element signature="e#24#53#0" expanded="true" />
           </folding>
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/auth.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="32" column="17" selection-start-line="32" selection-start-column="17" selection-end-line="32" selection-end-column="17" />
-          <folding />
         </state>
       </provider>
     </entry>
@@ -1060,13 +1031,51 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/views/common.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="46" column="40" selection-start-line="46" selection-start-column="40" selection-end-line="46" selection-end-column="40" />
+          <folding>
+            <element signature="e#24#38#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/views/base.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="21" column="81" selection-start-line="21" selection-start-column="81" selection-end-line="21" selection-end-column="81" />
+          <folding>
+            <element signature="e#24#66#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/app.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.5147059">
+        <state vertical-scroll-proportion="0.0">
           <caret line="21" column="47" selection-start-line="21" selection-start-column="47" selection-end-line="21" selection-end-column="47" />
           <folding>
             <element signature="e#24#38#0" expanded="true" />
           </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/views/auth.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="34" column="26" selection-start-line="34" selection-start-column="26" selection-end-line="34" selection-end-column="26" />
+          <folding>
+            <element signature="e#24#64#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://D:/Python27/Lib/site-packages/flask/helpers.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.85">
+          <caret line="253" column="78" selection-start-line="253" selection-start-column="22" selection-end-line="253" selection-end-column="78" />
+          <folding />
         </state>
       </provider>
     </entry>
