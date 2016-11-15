@@ -3,7 +3,7 @@ import logging
 import platform
 import os
 from datetime import timedelta
-from flask import Flask, send_from_directory
+from flask import Flask, send_from_directory, request, redirect
 
 from config import USER, PASSWORD, HOST, PORT, DATABASE, SOCKET_TIMEOUT, REDIS_SETTINGS, REDIS_SENTINELS, \
     STATIC_BASE_URL, DEBUG, REMEMBER_DURATION, URL_SCHEME
@@ -13,7 +13,7 @@ from utils import redis, integrated_redis
 from manage import admin, api
 from utils.scheduler import init_scheduler
 
-logging.basicConfig(level=logging.ERROR)
+logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR)
 
 app = Flask(__name__, static_url_path=STATIC_BASE_URL)
 app.config["SQLALCHEMY_DATABASE_URI"] = "postgresql://{un}:{pw}@{h}:{p}/{db}".format(
@@ -32,13 +32,17 @@ app.secret_key = "test"
 # def page_not_found(e):
 #     return render_template('error/404.html', admin_base_template=admin.base_template), 404
 
+@app.before_request
+def before_request():
+    if URL_SCHEME == "https":
+        if request.url.startswith('http://'):
+            url = request.url.replace('http://', 'https://', 1)
+            return redirect(url, code=301)
+
 @app.route('/favicon.ico')
 def favicon():
     return send_from_directory(os.path.join(app.root_path, 'static/images'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
-
-# Start a schedule to execute or eliminate uncompleted jobs
-# init_scheduler()
 
 db.init_app(app)
 login_manager.init_app(app)
