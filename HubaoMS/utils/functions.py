@@ -1,6 +1,7 @@
 # -*- coding: utf-8 -*-
 import os
 import hashlib
+from math import ceil
 from flask import make_response, jsonify
 
 from config import IMAGE_DIR, IMAGE_BASE_PATH
@@ -29,3 +30,15 @@ def hash_sha1(s):
 
 def json_response(data, code):
     return make_response(jsonify(data), code)
+
+
+def num_of_page(total, page_size=None):
+    # Calculate number of pages
+    if total > 0 and page_size:
+        num_pages = int(ceil(total / float(page_size)))
+    elif not page_size:
+        num_pages = 0  # hide pager for unlimited page_size
+    else:
+        num_pages = None  # use simple pager
+
+    return num_pages

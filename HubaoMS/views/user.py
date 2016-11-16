@@ -252,7 +252,7 @@ class UserView(BaseUserView):
     column_formatters = {"avatar": format_thumbnail("avatar"),
                          "sex": lambda v, c, m, n: m.sex.get("sex", "") if m.sex else None,
                          "compere.auth_status": lambda v, c, m, n: u"是" if m.compere and m.compere.auth_status else u"否",
-                         "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S"),
+                         "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S") if m.cert else "",
                          "actions": format_user_action}
 
     list_template = "user/user_view.html"

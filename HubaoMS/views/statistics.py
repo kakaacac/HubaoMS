@@ -1,5 +1,4 @@
 # -*- coding: utf-8 -*-
-from math import ceil
 from datetime import timedelta, datetime
 import time
 from collections import OrderedDict
@@ -12,6 +11,7 @@ from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, App
     Room
 from config import ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
 from utils.formatter import format_live_stat_actions, format_gift_stat_detail
+from utils.functions import num_of_page
 
 
 class LiveShowStatView(AuthenticatedModelView):
@@ -37,10 +37,6 @@ class LiveShowStatView(AuthenticatedModelView):
         "processing_date": lambda v, c, m, n: m.processing_date.strftime("%Y-%m-%d"),
         "total_show": lambda v, c, m, n: m.normal_show + m.paid_show,
         "actions": format_live_stat_actions
-    }
-
-    column_descriptions = {
-        "total_show": "test desc"
     }
 
     extra_sorting = {
@@ -270,13 +266,7 @@ class GiftStatView(AuthenticatedModelView):
 
         count = ALL_UID.count()
 
-        # Calculate number of pages
-        if count > 0 and self.page_size:
-            num_pages = int(ceil(count / float(self.page_size)))
-        elif not self.page_size:
-            num_pages = 0  # hide pager for unlimited page_size
-        else:
-            num_pages = None  # use simple pager
+        num_pages = num_of_page(count, self.page_size)
 
         data = OrderedDict()
         for item in DATA.all():
@@ -324,13 +314,7 @@ class GiftStatView(AuthenticatedModelView):
 
         count = ALL_UID.count()
 
-        # Calculate number of pages
-        if count > 0 and self.page_size:
-            num_pages = int(ceil(count / float(self.page_size)))
-        elif not self.page_size:
-            num_pages = 0  # hide pager for unlimited page_size
-        else:
-            num_pages = None  # use simple pager
+        num_pages = num_of_page(count, self.page_size)
 
         data = OrderedDict()
         for item in DATA.all():
@@ -397,7 +381,6 @@ class GiftStatView(AuthenticatedModelView):
 
         return self.render("statistics/presenter_detail.html", **kwargs)
 
-    # TODO: bug
     @expose('/recipient/detail/<sid>/<uid>')
     def recipient_detail(self, sid, uid):
         stat = DailyStatistics.query.get(sid)
@@ -438,23 +421,131 @@ class GiftStatView(AuthenticatedModelView):
 
 
 class InteractiveGameStatView(AuthenticatedBaseView):
+    @staticmethod
+    def update_item(dictionary, game_id, currency, award, bet):
+        if game_id == 1:
+            dictionary["dice_stat"]["consumption"][currency] = bet
+            dictionary["dice_stat"]["compensation"][currency] = award + bet
+        elif game_id == 2:
+            dictionary["qna_stat"]["consumption"][currency] = bet
+            dictionary["qna_stat"]["compensation"][currency] = award + bet
+
     def get_list(self):
         page = int(request.args.get("page", 1))
-        STATS = db.session.query(DailyStatistics.id, DailyStatistics.processing_date)\
-            .order_by(expression.desc(DailyStatistics.processing_date))\
+        ALL = db.session.query(DailyStatistics.id, DailyStatistics.processing_date)
+        count = ALL.count()
+
+        STATS = ALL.order_by(expression.desc(DailyStatistics.processing_date))\
             .offset((page - 1)*self.page_size).limit(self.page_size).cte("STATS")
 
-        query_result = db.session.query(STATS.c.id, STATS.c.processing_date, GameStat.game_id, GameStat.currency,
+        CALCULATIONS = db.session.query(STATS.c.id, GameStat.game_id, GameStat.currency,
                                         func.coalesce(func.sum(GameStat.award), 0),
-                                        func.coalesce(func.sum(GameStat.bet), 0), func.count()).\
-            join(GameStat, STATS.c.processing_date == func.date(GameStat.game_start)).\
-            group_by(STATS.c.id, STATS.c.processing_date, GameStat.game_id, GameStat.currency).all()
+                                        func.coalesce(func.sum(GameStat.bet), 0)).\
+            outerjoin(GameStat, STATS.c.processing_date == func.date(GameStat.game_start)).\
+            group_by(STATS.c.id, GameStat.game_id, GameStat.currency).subquery("CALCULATIONS")
 
-        data = reduce(lambda x, y: x.update({y[0]: y[1:]}) or x, query_result, {})
+        query_result = db.session.query(CALCULATIONS, DailyStatistics.processing_date,
+                                        DailyStatistics.interactive_show, DailyStatistics.cheating_dice,
+                                        DailyStatistics.qna).\
+            join(DailyStatistics, CALCULATIONS.c.id == DailyStatistics.id).\
+            order_by(expression.desc(DailyStatistics.processing_date)).all()
 
-        return data
+        table_list = []
+        for row in query_result:
+            if table_list and table_list[-1]["id"] == row[0]:
+                item = table_list[-1]
+            else:
+                item = {
+                    "id": row[0],
+                    "date": row[5].strftime("%Y-%m-%d"),
+                    "stream_total": row[6],
+                    "uncompleted": time.mktime(row[5].timetuple()) < time.mktime(datetime(2016, 11, 1).timetuple()),
+                    "dice_stat": {
+                        "count": row[7],
+                        "consumption": {
+                            "vfc": 0,
+                            "vcy": 0
+                        },
+                        "compensation": {
+                            "vfc": 0,
+                            "vcy": 0
+                        }
+                    },
+                    "qna_stat": {
+                        "count": row[8],
+                        "consumption": {
+                            "vfc": 0,
+                            "vcy": 0
+                        },
+                        "compensation": {
+                            "vfc": 0,
+                            "vcy": 0
+                        }
+                    }
+                }
+                table_list.append(item)
+            self.update_item(item, row[1], row[2], row[3], row[4])
+
+        return table_list, count
 
     @expose("/")
     def index_view(self):
-        print self.get_list()
-        return "test"
+        data, count = self.get_list()
+        num_pages = num_of_page(count, self.page_size)
+        page = int(request.args.get("page", 1))
+
+        def pager_url(p):
+            return url_for(".index_view", page=p+1)
+
+        kwargs = {
+            "data": data,
+            "num_pages": num_pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": count
+        }
+        return self.render("statistics/interactive_game_stat.html", **kwargs)
+
+    @expose('/detail/<id>')
+    def detail_list(self, id):
+        stat = DailyStatistics.query.get(id)
+        page = int(request.args.get("page", 1))
+
+        result = GameStat.query.filter(func.date(GameStat.game_start) == stat.processing_date).\
+            join(AppUser, GameStat.compere_id == AppUser.uuid).\
+            join(UserCertification, AppUser.uid == UserCertification.uid).\
+            order_by(GameStat.game_start).\
+            add_columns(UserCertification.nickname).paginate(page, self.page_size, False)
+
+        data = []
+        for item in result.items:
+            duration = item.GameStat.game_end - item.GameStat.game_start
+            duration -= timedelta(microseconds=duration.microseconds)
+
+            data.append({
+                "room_id": item.GameStat.room_id,
+                "login_name": item.nickname,
+                "currency": item.GameStat.currency,
+                "start": item.GameStat.game_start.strftime("%H:%M:%S"),
+                "end": item.GameStat.game_end.strftime("%H:%M:%S"),
+                "duration": duration,
+                "consumption": item.GameStat.bet,
+                "compensation": item.GameStat.award + item.GameStat.bet,
+                "game_id": item.GameStat.game_id
+            })
+
+        def pager_url(p):
+            return url_for(".detail_list", page=p+1, id=id)
+
+        kwargs = {
+            "data": data,
+            "num_pages": result.pages,
+            "page": page - 1,
+            "pager_url": pager_url,
+            "page_size": self.page_size,
+            "total": result.total,
+            "title": u"{} 游戏记录".format(stat.processing_date.strftime("%Y-%m-%d"))
+        }
+
+        return self.render("statistics/interactive_game_list.html", **kwargs)

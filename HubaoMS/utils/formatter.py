@@ -206,7 +206,7 @@ def format_broadcast_actions(view, context, model, name):
 
 def format_live_stat_actions(view, context, model, name):
     return button([
-        (u'<span class="glyphicon glyphicon-list-alt" style="margin: 0 2px;" title="开播列表"></span>',
+        (u'<span class="glyphicon glyphicon-list-alt" title="开播列表"></span>',
          url_for("show_statistics.stream_list", id=model.id)),
     ], btn_class="")
 
@@ -217,6 +217,6 @@ def format_gift_stat_detail(role):
     def f(view, context, model, name):
         return button([
             (u'<span class="glyphicon glyphicon-list-alt" '
-             u'style="margin: 0 2px;" title="{}列表"></span>'.format(title),
+             u'title="{}列表"></span>'.format(title),
              url_for("gift_statistics.{}_list".format(role), id=model.id))], btn_class="")
     return f
