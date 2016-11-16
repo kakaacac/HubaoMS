@@ -597,6 +597,10 @@ class AccountManagementView(BaseUserView):
     }
     list_template = "user/account_management.html"
 
+    @staticmethod
+    def is_robot(user):
+        return ROBOT_DEVICE_BEGIN <= Device.query.get(user.active_device).device_id <= ROBOT_DEVICE_END
+
     # Override index_view function
     @expose('/')
     def index_view(self):
@@ -607,9 +611,13 @@ class AccountManagementView(BaseUserView):
     @expose("/block/<uid>")
     def block_account(self, uid):
         user = AppUser.query.get_or_404(uid)
+        if self.is_robot(user):
+            flash(u"不能封禁机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if user.locked:
             flash(u"用户已被封禁", category="info")
-            return redirect(url_for("account.index_view"))
+            return redirect(url_for("account.index_view", **request.args))
         else:
             user.locked = True
             user.locked_time = datetime.now()
@@ -620,6 +628,11 @@ class AccountManagementView(BaseUserView):
     @expose("/unblock/<uid>")
     def unblock_account(self, uid):
         user = AppUser.query.get_or_404(uid)
+
+        if self.is_robot(user):
+            flash(u"不能解封机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if user.locked:
             user.locked = False
             db.session.commit()
@@ -633,6 +646,11 @@ class AccountManagementView(BaseUserView):
     @expose("/suspend_room/<rid>")
     def suspend_room(self, rid):
         room = Room.query.get_or_404(rid)
+
+        if self.is_robot(room.user):
+            flash(u"不能整改机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if room.enable:
             room_id = room.rid
             end_time = int(time.time()) + 300
@@ -665,6 +683,11 @@ class AccountManagementView(BaseUserView):
     @expose("/block_room/<rid>")
     def block_room(self, rid):
         room = Room.query.get_or_404(rid)
+
+        if self.is_robot(room.user):
+            flash(u"不能封停机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if room.enable:
             # send NetEase message
             self.send_block_room_msg(room.chatroom, 2)
@@ -688,6 +711,11 @@ class AccountManagementView(BaseUserView):
     @expose("/unblock_room/<rid>")
     def unblock_room(self, rid):
         room = Room.query.get_or_404(rid)
+
+        if self.is_robot(room.user):
+            flash(u"不能解封机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if room.enable:
             flash(u"房间未被封停", category="info")
             return redirect(url_for("account.index_view"))
@@ -705,6 +733,11 @@ class AccountManagementView(BaseUserView):
     @expose("/temporary_block/<uid>", methods=['POST',])
     def temporary_block_account(self, uid):
         user = AppUser.query.get_or_404(uid)
+
+        if self.is_robot(user):
+            flash(u"不能封禁机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if user.locked:
             flash(u"用户已被封禁", category="info")
             return redirect(url_for("account.index_view", **request.args))
@@ -746,6 +779,11 @@ class AccountManagementView(BaseUserView):
     @expose("/temporary_block_room/<rid>", methods=['POST',])
     def temporary_block_room(self, rid):
         room = Room.query.get_or_404(rid)
+
+        if self.is_robot(room.user):
+            flash(u"不能封停机器人", category="error")
+            return redirect(url_for("account.index_view", **request.args))
+
         if room.enable:
             form = DateSelectForm()
             if form.validate_on_submit():
