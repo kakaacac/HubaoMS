@@ -1,10 +1,11 @@
 # -*- coding: utf-8 -*-
-from flask import flash, redirect, url_for
+from flask import flash
 from flask_admin import BaseView, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView, tools
 from flask_login import current_user
 from sqlalchemy.sql import expression
 
+from utils.functions import abs_redirect
 
 class AuthenticatedBaseView(BaseView):
     # Various settings
@@ -18,7 +19,7 @@ class AuthenticatedBaseView(BaseView):
 
     def inaccessible_callback(self, name, **kwargs):
         flash(u"请先登录", category='error')
-        return redirect(url_for("login.index"))
+        return abs_redirect("login.index")
 
 
 class AuthenticatedModelView(ModelView, AuthenticatedBaseView):

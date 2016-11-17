@@ -164,11 +164,22 @@ def format_room_channel(view, context, model, name):
 
 
 def format_boolean(attr, true_color=None, false_color=None):
+    attr_path = attr.split(".")
     def f(view, context, model, name):
-        if getattr(model, attr):
-            return colorize(u"是", true_color) if true_color else u"是"
+        try:
+            attribute = getattr(model, attr_path[0])
+            if len(attr_path) > 1:
+                for a in attr_path[1:]:
+                    attribute = getattr(attribute, a)
+        except AttributeError:
+            return ""
+        if isinstance(attribute, bool):
+            if attribute:
+                return colorize(u"是", true_color) if true_color else u"是"
+            else:
+                return colorize(u"否", false_color) if false_color else u"否"
         else:
-            return colorize(u"否", false_color) if false_color else u"否"
+            raise Exception("Cannot format non-boolean type attribute")
     return f
 
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 from flask_admin import expose
-from flask import url_for, flash, redirect, request
+from flask import url_for, flash, request
 import time
 from datetime import datetime
 import random
@@ -10,7 +10,7 @@ from base import AuthenticatedModelView
 from utils.formatter import format_broadcast_actions, format_broadcast_range, format_broadcast_status
 from models import Broadcast, RoomTags, Room, db
 from forms import BroadcastEditForm
-from utils.functions import json_response, hash_md5
+from utils.functions import json_response, hash_md5, abs_redirect
 from utils import netease, job_queue
 
 
@@ -102,11 +102,11 @@ class BroadcastView(AuthenticatedModelView):
                 }
             })
 
-            flash(u"添加广播成功", category="info")
-            return redirect(url_for(".index_view"))
+            flash(u"添加广播成功", category="success")
+            return abs_redirect(".index_view")
         else:
             flash(u"输入有误，添加失败", category="error")
-            return redirect(url_for(".index_view"))
+            return abs_redirect(".index_view")
 
 
     @expose('/edit/<id>')
@@ -179,18 +179,18 @@ class BroadcastView(AuthenticatedModelView):
 
             db.session.commit()
 
-            flash(u"修改广播成功", category="info")
-            return redirect(url_for(".index_view"))
+            flash(u"修改广播成功", category="success")
+            return abs_redirect(".index_view")
         else:
             flash(u"输入有误，修改失败", category="error")
-            return redirect(url_for(".index_view"))
+            return abs_redirect(".index_view")
 
     @expose('/stop/<id>')
     def stop_broadcast(self, id):
         broadcast = Broadcast.query.get_or_404(id)
         if broadcast.end_time < datetime.now() or broadcast.interrupted:
             flash(u"广播已停止", category="error")
-            return redirect(url_for(".index_view"))
+            return abs_redirect(".index_view")
         else:
             # Stop job
             job_queue.put({
@@ -199,18 +199,18 @@ class BroadcastView(AuthenticatedModelView):
             })
             broadcast.interrupted = True
             db.session.commit()
-            flash(u"停止广播成功", category="info")
-            return redirect(url_for(".index_view", **request.args))
+            flash(u"停止广播成功", category="success")
+            return abs_redirect(".index_view", **request.args)
 
     @expose('/restart/<id>')
     def restart_broadcast(self, id):
         broadcast = Broadcast.query.get_or_404(id)
         if broadcast.end_time < datetime.now():
             flash(u"广播已过期", category="error")
-            return redirect(url_for(".index_view"))
+            return abs_redirect(".index_view")
         elif not broadcast.interrupted:
             flash(u"广播启动中", category="error")
-            return redirect(url_for(".index_view"))
+            return abs_redirect(".index_view")
         else:
             value = [int(v) for v in broadcast.target.split(',')] if broadcast.target else None
             kwargs = {
@@ -235,8 +235,8 @@ class BroadcastView(AuthenticatedModelView):
             broadcast.interrupted = False
             db.session.commit()
 
-            flash(u"重新启动广播成功", category="info")
-            return redirect(url_for(".index_view", **request.args))
+            flash(u"重新启动广播成功", category="success")
+            return abs_redirect(".index_view", **request.args)
 
     @expose('/tags')
     def get_tags(self):

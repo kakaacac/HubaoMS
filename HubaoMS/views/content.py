@@ -1,12 +1,12 @@
 # -*- coding: utf-8 -*-
-from flask import flash, redirect, url_for, request
+from flask import flash, url_for, request
 from flask_admin import expose
 
 from base import AuthenticatedModelView
 from models import Banner, db, AppUser, Room, UserCertification
 from utils.formatter import format_thumbnail, format_banner_actions
 from forms import BannerEditForm
-from utils.functions import is_file_exists, json_response
+from utils.functions import is_file_exists, json_response, abs_redirect
 
 class BannerView(AuthenticatedModelView):
     column_list = ("id", "room_id", "room.name", "image", "login_name", "compere.display_name",
@@ -51,8 +51,8 @@ class BannerView(AuthenticatedModelView):
         banner = Banner.query.get_or_404(id)
         db.session.delete(banner)
         db.session.commit()
-        flash(u"删除轮播图成功", category="info")
-        return redirect(url_for(".index_view"))
+        flash(u"删除轮播图成功", category="success")
+        return abs_redirect(".index_view", **request.args)
 
     @expose('/edit/<id>')
     def banner_edit_view(self, id):
@@ -80,11 +80,11 @@ class BannerView(AuthenticatedModelView):
 
         if not form.validate_on_submit():
             flash(u"信息有误或缺失", category="error")
-            return redirect(url_for('.banner_edit_view', id=id))
+            return abs_redirect('.banner_edit_view', id=id)
 
         if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
-            return redirect(url_for('.banner_edit_view', id=id))
+            return abs_redirect('.banner_edit_view', id=id)
 
         banner.room_id = form.room_id.data
         banner.room_name = form.room_name.data
@@ -102,8 +102,8 @@ class BannerView(AuthenticatedModelView):
 
         db.session.commit()
 
-        flash(u"修改轮播图成功", category="info")
-        return redirect(url_for(".index_view"))
+        flash(u"修改轮播图成功", category="success")
+        return abs_redirect(".index_view", **request.args)
 
     @expose('/query')
     def query_info(self):
@@ -161,11 +161,11 @@ class BannerView(AuthenticatedModelView):
 
         if not form.validate_on_submit():
             flash(u"信息有误或缺失", category="error")
-            return redirect(url_for('.create_banner_view'))
+            return abs_redirect('.create_banner_view')
 
         if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
-            return redirect(url_for('.create_banner_view'))
+            return abs_redirect('.create_banner_view')
 
         banner.room_id = form.room_id.data
         banner.room_name = form.room_name.data
@@ -184,8 +184,8 @@ class BannerView(AuthenticatedModelView):
         db.session.add(banner)
         db.session.commit()
 
-        flash(u"添加轮播图成功", category="info")
-        return redirect(url_for(".index_view"))
+        flash(u"添加轮播图成功", category="success")
+        return abs_redirect(".index_view", **request.args)
 
 
 class RoomTagsView(AuthenticatedModelView):

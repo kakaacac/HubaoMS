@@ -4,8 +4,9 @@ import time
 import requests
 from datetime import datetime, timedelta
 from math import ceil
+import psycopg2
 from sqlalchemy.sql import func, or_
-from flask import flash, redirect, url_for, request, abort
+from flask import flash, url_for, request, abort
 from sqlalchemy.orm import joinedload
 from flask_admin import expose
 
@@ -13,10 +14,11 @@ from base import AuthenticatedBaseView, AuthenticatedModelView
 from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
 from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
-    format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status
+    format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status, format_boolean
 from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room, Device
-from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_DEVICE_END, ROBOT_DEVICE_BEGIN
-from utils.functions import is_file_exists, hash_md5
+from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_DEVICE_END, ROBOT_DEVICE_BEGIN, \
+    HOST, PORT, USER, PASSWORD, DATABASE
+from utils.functions import is_file_exists, hash_md5, abs_redirect
 from utils import redis, netease, job_queue
 
 
@@ -381,8 +383,8 @@ class FeedbackView(AuthenticatedModelView):
         feedback = Feedback.query.get_or_404(fid)
         feedback.status = 1
         db.session.commit()
-        flash(u"操作成功", category="info")
-        return redirect(url_for("feedback.index_view", **request.args))
+        flash(u"操作成功", category="success")
+        return abs_redirect("feedback.index_view", **request.args)
 
 
 class TaskView(AuthenticatedBaseView):
@@ -452,11 +454,11 @@ class TaskView(AuthenticatedBaseView):
         form = TaskEditForm()
         if not form.validate_on_submit():
             flash(u"缺少关键信息", category="error")
-            return redirect(url_for('.task_edit_view', task_id=task_id))
+            return abs_redirect('.task_edit_view', task_id=task_id)
 
         if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
-            return redirect(url_for('.task_edit_view', task_id=task_id))
+            return abs_redirect('.task_edit_view', task_id=task_id)
 
         with open(TASK_CONFIG) as f:
             task_info = json.load(f)
@@ -476,8 +478,8 @@ class TaskView(AuthenticatedBaseView):
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
 
-        flash(u"修改成功", category="info")
-        return redirect(url_for(".task_list"))
+        flash(u"修改成功", category="success")
+        return abs_redirect(".task_list")
 
     @expose('/create')
     def create_task_view(self):
@@ -498,11 +500,11 @@ class TaskView(AuthenticatedBaseView):
         form = TaskEditForm()
         if not form.validate_on_submit():
             flash(u"信息有误或缺失", category="error")
-            return redirect(url_for('.create_task_view'))
+            return abs_redirect('.create_task_view')
 
         if not is_file_exists(form.img_url.data):
             flash(u"请先上传图片", category="error")
-            return redirect(url_for('.create_task_view'))
+            return abs_redirect('.create_task_view')
 
         with open(TASK_CONFIG) as f:
             task_info = json.load(f)
@@ -524,8 +526,8 @@ class TaskView(AuthenticatedBaseView):
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
 
-        flash(u"任务添加成功", category="info")
-        return redirect(url_for(".task_list"))
+        flash(u"任务添加成功", category="success")
+        return abs_redirect(".task_list")
 
     @expose('/delete/<task_id>')
     def delete_task(self, task_id):
@@ -539,47 +541,64 @@ class TaskView(AuthenticatedBaseView):
         with open(TASK_CONFIG, 'w') as f:
             json.dump(task_info, f, indent=2)
 
-        flash(u"删除成功", category="info")
-        return redirect(url_for(".task_list"))
+        flash(u"删除成功", category="success")
+        return abs_redirect(".task_list")
 
-
+# TODO: Should be executed by another program
 def unblock_account_job(uid):
-    # To avoid circular import, should be improved later
-    from app import app
-    with app.app_context():
-        user = AppUser.query.get(uid)
-        if user.locked:
-            user.locked = False
-            db.session.commit()
-            redis.master().hdel("control:block:account", user.uuid.replace("-", ""))
+    conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
+    cur = conn.cursor()
+
+    cur.execute("SELECT uuid, locked, locked_time, rid, room.enable, disable_time FROM users "
+                "INNER JOIN room ON users.uid=room.uid WHERE users.uid=%s;", (uid,))
+    uuid, locked, locked_time, rid, enable, disable_time = cur.fetchone()
+
+    if locked:
+        cur.execute("UPDATE users SET locked=FALSE WHERE uid=%s", (uid,))
+        if not enable and locked_time == disable_time:
+            cur.execute("UPDATE room SET enable=TRUE, control_flag=0 WHERE rid=%s", (rid,))
+            AccountManagementView.control_video_stream(rid, uuid, action=1)
+            redis.master().hdel("control:block:room", rid)
+
+        conn.commit()
+        redis.master().hdel("control:block:account", uuid.replace("-", ""))
+
+        cur.close()
+        conn.close()
 
 
 def unblock_room_job(rid):
-    # To avoid circular import, should be improved later
-    from app import app
-    with app.app_context():
-        room = Room.query.get(rid)
-        if not room.enable:
-            #restore video stream
-            AccountManagementView.control_video_stream(room.rid, room.user.uuid, action=1)
-            room.enable = True
-            room.control_flag = 0
-            db.session.commit()
-            redis.master().hdel("control:block:room", rid)
+    conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
+    cur = conn.cursor()
+
+    cur.execute("SELECT uuid, enable FROM room inner join users on room.uid=users.uid WHERE rid=%s;", (rid,))
+    uuid, enable = cur.fetchone()
+
+    if not enable:
+        #restore video stream
+        AccountManagementView.control_video_stream(rid, uuid, action=1)
+
+        cur.execute("UPDATE room SET enable=TRUE, control_flag=0 WHERE rid=%s", (rid,))
+        conn.commit()
+        redis.master().hdel("control:block:room", rid)
+
+        cur.close()
+        conn.close()
 
 
 class AccountManagementView(BaseUserView):
     column_auto_select_related = True
-    column_list = ("uid", "cert.nickname", "display_name", "locked", "locked_time", "acc_action",
+    column_list = ("uid", "cert.nickname", "display_name", "room.on_air", "locked", "locked_time", "acc_action",
                    "room.control_flag", "room.disable_time", "room_action")
     column_default_sort = [("locked", True), ("room.control_flag", True)]
     column_searchable_list = ("uid", "cert.nickname", "display_name")
-    column_sortable_list = ("uid", "cert.nickname", "locked", "locked_time",
+    column_sortable_list = ("uid", "cert.nickname", "locked", "locked_time", "room.on_air",
                             "room.control_flag", "room.disable_time", "display_name")
     column_labels = {
         "uid": u"用户 ID",
         "cert.nickname": u"登录名",
         "locked": u"用户账号状态",
+        "room.on_air": u"直播中",
         "locked_time": u"账号最近封停时间",
         "acc_action": u"账号操作",
         "room.control_flag": u"用户直播间状态",
@@ -593,7 +612,8 @@ class AccountManagementView(BaseUserView):
         "room.control_flag": format_room_status,
         "room.disable_time": lambda v, c, m, n: m.room.disable_time.strftime("%Y-%m-%d %H:%M:%S") if m.room and m.room.disable_time else None,
         "acc_action": format_account_action,
-        "room_action": format_room_action
+        "room_action": format_room_action,
+        "room.on_air": format_boolean("room.on_air", true_color="green")
     }
     list_template = "user/account_management.html"
 
@@ -613,17 +633,35 @@ class AccountManagementView(BaseUserView):
         user = AppUser.query.get_or_404(uid)
         if self.is_robot(user):
             flash(u"不能封禁机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if user.locked:
             flash(u"用户已被封禁", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
         else:
+            now = datetime.now()
             user.locked = True
-            user.locked_time = datetime.now()
+            user.locked_time = now
+
+            # Block room simultaneously
+            if user.room.enable:
+                # send NetEase message
+                self.send_block_room_msg(user.room.chatroom, 2)
+
+                #cut off video stream
+                self.control_video_stream(user.room.rid, user.uuid)
+
+                if user.room.control_flag == 1:
+                    redis.master().zrem("expires:room.ctrl.1", user.room.rid)
+
+                user.room.enable = False
+                user.room.on_air = False
+                user.room.control_flag = 2
+                user.room.disable_time = now
+
             db.session.commit()
-            flash(u"封停成功", category="warning")
-            return redirect(url_for("account.index_view", **request.args))
+            flash(u"封停成功", category="success")
+            return abs_redirect("account.index_view", **request.args)
 
     @expose("/unblock/<uid>")
     def unblock_account(self, uid):
@@ -631,17 +669,27 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(user):
             flash(u"不能解封机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if user.locked:
             user.locked = False
+
+            if not user.room.enable and user.locked_time == user.room.disable_time:
+                #restore video stream
+                self.control_video_stream(user.room.rid, user.uuid, action=1)
+
+                user.room.enable = True
+                user.room.control_flag = 0
+                db.session.commit()
+                redis.master().hdel("control:block:room", user.room.rid)
+
             db.session.commit()
             redis.master().hdel("control:block:account", user.uuid.replace("-", ""))
-            flash(u"解封成功", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            flash(u"解封成功", category="success")
+            return abs_redirect("account.index_view", **request.args)
         else:
             flash(u"用户未被封禁", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
     @expose("/suspend_room/<rid>")
     def suspend_room(self, rid):
@@ -649,7 +697,7 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(room.user):
             flash(u"不能整改机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if room.enable:
             room_id = room.rid
@@ -672,13 +720,13 @@ class AccountManagementView(BaseUserView):
             db.session.commit()
 
             if zadd and rec_num and net:
-                flash(u"勒令整改成功", category="warning")
+                flash(u"勒令整改成功", category="success")
             else:
                 flash(u"操作失败", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
     @expose("/block_room/<rid>")
     def block_room(self, rid):
@@ -686,7 +734,7 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(room.user):
             flash(u"不能封停机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if room.enable:
             # send NetEase message
@@ -699,14 +747,15 @@ class AccountManagementView(BaseUserView):
                 redis.master().zrem("expires:room.ctrl.1", rid)
 
             room.enable = False
+            room.on_air = False
             room.control_flag = 2
             room.disable_time = datetime.now()
             db.session.commit()
-            flash(u"封停成功", category="warning")
-            return redirect(url_for("account.index_view", **request.args))
+            flash(u"封停成功", category="success")
+            return abs_redirect("account.index_view", **request.args)
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
     @expose("/unblock_room/<rid>")
     def unblock_room(self, rid):
@@ -714,11 +763,11 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(room.user):
             flash(u"不能解封机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if room.enable:
             flash(u"房间未被封停", category="info")
-            return redirect(url_for("account.index_view"))
+            return abs_redirect("account.index_view")
         else:
             #restore video stream
             self.control_video_stream(room.rid, room.user.uuid, action=1)
@@ -727,8 +776,8 @@ class AccountManagementView(BaseUserView):
             room.control_flag = 0
             db.session.commit()
             redis.master().hdel("control:block:room", rid)
-            flash(u"解封成功", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            flash(u"解封成功", category="success")
+            return abs_redirect("account.index_view", **request.args)
 
     @expose("/temporary_block/<uid>", methods=['POST',])
     def temporary_block_account(self, uid):
@@ -736,16 +785,17 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(user):
             flash(u"不能封禁机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if user.locked:
             flash(u"用户已被封禁", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
         else:
+            now = datetime.now()
             form = DateSelectForm()
             if form.validate_on_submit():
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = datetime.now() + timedelta(days=block_time)
+                expired_time = now + timedelta(seconds=block_time)
 
                 # Store expiration info at redis
                 redis.master().hset("control:block:account",
@@ -767,14 +817,34 @@ class AccountManagementView(BaseUserView):
                 })
 
                 user.locked = True
-                user.locked_time = datetime.now()
+                user.locked_time = now
+
+                # Block room simultaneously
+                if user.room.enable:
+                    # send NetEase message
+                    self.send_block_room_msg(user.room.chatroom, 2)
+
+                    #cut off video stream
+                    self.control_video_stream(user.room.rid, user.uuid)
+
+                    if user.room.control_flag == 1:
+                        redis.master().zrem("expires:room.ctrl.1", user.room.rid)
+
+                    user.room.enable = False
+                    user.room.on_air = False
+                    user.room.control_flag = 2
+                    user.room.disable_time = now
+
+                    # Store expiration info at redis
+                    redis.master().hset("control:block:room", user.room.rid, expired_time.strftime("%Y-%m-%d %H:%M:%S"))
+
                 db.session.commit()
 
-                flash(u"封停成功", category="warning")
-                return redirect(url_for("account.index_view", **request.args))
+                flash(u"封停成功", category="success")
+                return abs_redirect("account.index_view", **request.args)
             else:
                 flash(u"数据输入有误，操作失败", category="error")
-                return redirect(url_for("account.index_view", **request.args))
+                return abs_redirect("account.index_view", **request.args)
 
     @expose("/temporary_block_room/<rid>", methods=['POST',])
     def temporary_block_room(self, rid):
@@ -782,13 +852,14 @@ class AccountManagementView(BaseUserView):
 
         if self.is_robot(room.user):
             flash(u"不能封停机器人", category="error")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
         if room.enable:
             form = DateSelectForm()
             if form.validate_on_submit():
+                now = datetime.now()
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = datetime.now() + timedelta(days=block_time)
+                expired_time = now + timedelta(seconds=block_time)
 
                 #cut off video stream
                 self.control_video_stream(rid, room.user.uuid)
@@ -797,8 +868,9 @@ class AccountManagementView(BaseUserView):
                     redis.master().zrem("expires:room.ctrl.1", rid)
 
                 room.enable = False
+                room.on_air = False
                 room.control_flag = 2
-                room.disable_time = datetime.now()
+                room.disable_time = now
                 db.session.commit()
 
                 # send NetEase message
@@ -821,14 +893,14 @@ class AccountManagementView(BaseUserView):
                     }
                 })
 
-                flash(u"封停成功", category="warning")
-                return redirect(url_for("account.index_view", **request.args))
+                flash(u"封停成功", category="success")
+                return abs_redirect("account.index_view", **request.args)
             else:
                 flash(u"数据输入有误，操作失败", category="error")
-                return redirect(url_for("account.index_view", **request.args))
+                return abs_redirect("account.index_view", **request.args)
         else:
             flash(u"房间已被封停", category="info")
-            return redirect(url_for("account.index_view", **request.args))
+            return abs_redirect("account.index_view", **request.args)
 
     @staticmethod
     def send_block_room_msg(chatroom_id, status):

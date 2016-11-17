@@ -63,7 +63,7 @@ class NetEase(object):
 if __name__ == '__main__':
     # import requests
     # net = NetEase()
-    # print requests.post("https://api.netease.im/nimserver/user/updateUinfo.action", data=urlencode({"accid":"system", "name":u"系统广播".encode("utf-8")}), headers=net.generate_header()).content
+    # print requests.post("https://api.netease.im/nimserver/user/updateUinfo.action", data=urlencode({"accid":"system", "name":u"系统消息".encode("utf-8")}), headers=net.generate_header()).content
     # print requests.post("https://api.netease.im/nimserver/user/getUinfos.action", data=urlencode({"accids":["system"]}), headers=net.generate_header()).content
     pass
 

@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
-from flask import flash, redirect, url_for, request
+from flask import flash, url_for, request
 from flask_admin import expose
 
 from base import AuthenticatedBaseView, AuthenticatedModelView
@@ -11,6 +11,7 @@ from models import GiftGiving, db, AppUser, UserCertification, Compere, RoomStat
 from config import PAGE_SIZE
 from forms import CompereConfigurationForm
 from utils import redis
+from utils.functions import abs_redirect
 
 
 class CompereView(AuthenticatedModelView):
@@ -118,16 +119,16 @@ class CompereVerificationView(AuthenticatedModelView):
         ver = CompereVerification.query.get_or_404(vid)
         ver.status = True
         db.session.commit()
-        flash(u"审核已通过", category="info")
-        return redirect(url_for(".index_view", **request.args))
+        flash(u"审核已通过", category="success")
+        return abs_redirect(".index_view", **request.args)
 
     @expose('/<vid>/reject')
     def verification_fail(self, vid):
         ver = CompereVerification.query.get_or_404(vid)
         ver.status = False
         db.session.commit()
-        flash(u"审核已拒绝", category="warning")
-        return redirect(url_for(".index_view", **request.args))
+        flash(u"审核已拒绝", category="error")
+        return abs_redirect(".index_view", **request.args)
 
 
 class Withdrawal(AuthenticatedModelView):
@@ -163,8 +164,8 @@ class Withdrawal(AuthenticatedModelView):
         wd = WithdrawHistory.query.get_or_404(wid)
         wd.status = 2
         db.session.commit()
-        flash(u"提现申请已通过", category="info")
-        return redirect(url_for(".index_view", **request.args))
+        flash(u"提现申请已通过", category="success")
+        return abs_redirect(".index_view", **request.args)
 
     @expose('/<wid>/reject')
     def withdrawal_fail(self, wid):
@@ -172,8 +173,8 @@ class Withdrawal(AuthenticatedModelView):
         wd.status = 3
         wd.deal_time = int(time.time())
         db.session.commit()
-        flash(u"提现申请已拒绝", category="warning")
-        return redirect(url_for(".index_view", **request.args))
+        flash(u"提现申请已拒绝", category="error")
+        return abs_redirect(".index_view", **request.args)
 
 
 class CompereConf(AuthenticatedBaseView):
@@ -182,8 +183,8 @@ class CompereConf(AuthenticatedBaseView):
         form = CompereConfigurationForm()
         if request.method == "POST":
             redis.master().hset('conf','check_required', "true" if form.conf.data == "1" else "false")
-            flash(u"修改成功", category="info")
-            return redirect(url_for(".compere_configuration"))
+            flash(u"修改成功", category="success")
+            return abs_redirect(".compere_configuration")
         else:
             check = redis.slave().hget('conf','check_required')
             return self.render("compere/compere_conf.html",

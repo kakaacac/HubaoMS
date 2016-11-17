@@ -2,9 +2,9 @@
 import os
 import hashlib
 from math import ceil
-from flask import make_response, jsonify
+from flask import make_response, jsonify, redirect, url_for
 
-from config import IMAGE_DIR, IMAGE_BASE_PATH
+from config import IMAGE_DIR, IMAGE_BASE_PATH, URL_SCHEME
 
 
 def is_file_exists(file_url):
@@ -42,3 +42,7 @@ def num_of_page(total, page_size=None):
         num_pages = None  # use simple pager
 
     return num_pages
+
+
+def abs_redirect(endpoint, **kwargs):
+    return redirect(url_for(endpoint, _external=True, _scheme=URL_SCHEME, **kwargs))

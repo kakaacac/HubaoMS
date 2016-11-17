@@ -1,18 +1,19 @@
 # -*- coding: utf-8 -*-
 from flask_admin import BaseView, expose
-from flask import redirect, url_for, flash, request
+from flask import flash, request
 from flask_login import login_user, logout_user, current_user
 
 from models import db, User
 from forms import LoginForm
 from views.base import AuthenticatedBaseView
+from utils.functions import abs_redirect
 
 class LoginView(BaseView):
     def is_accessible(self):
         return not current_user.is_authenticated
 
     def inaccessible_callback(self, name, **kwargs):
-        return redirect(url_for("admin.index"))
+        return abs_redirect("admin.index")
 
     @expose()
     def index(self):
@@ -26,12 +27,12 @@ class LoginView(BaseView):
             user, authenticated = User.query.authenticate(form.username.data, form.password.data)
             if user and authenticated:
                 login_user(user, remember=form.remember.data)
-                return redirect(url_for("user.index_view"))
+                return abs_redirect("user.index_view")
             else:
                 flash("Invalid auth info", category="error")
-                return redirect(url_for(".index"))
+                return abs_redirect(".index")
         flash("Invalid Input!", category="error")
-        return redirect(url_for(".index"))
+        return abs_redirect(".index")
 
     @expose('/reg', methods=["POST"])
     def register(self):
