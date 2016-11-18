@@ -308,7 +308,7 @@ class DailyStatistics(db.Model):
     cheating_dice = db.Column(db.Integer)
     qna = db.Column(db.Integer)
     total_user = db.Column(db.Integer)
-    DAU = db.Column(db.Integer)
+    dau = db.Column(db.Integer)
 
 
 class LiveStreamHistory(db.Model):
