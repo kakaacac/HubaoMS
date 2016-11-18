@@ -10,13 +10,13 @@ from views.room import RoomView
 from views.content import BannerView, RoomTagsView
 from views.common import ImageUpload
 from views.message import BroadcastView
-from views.statistics import LiveShowStatView, GiftStatView, InteractiveGameStatView
+from views.statistics import LiveShowStatView, GiftStatView, InteractiveGameStatView, CommonStatView
 from models import db, AppUser, Feedback, Compere, CompereVerification, WithdrawHistory, Room, Banner, \
     Broadcast, RoomTags, DailyStatistics
 from config import BASE_URL
 
 api = Api(prefix=BASE_URL)
-admin = Admin(name="Hubao TV", template_mode="bootstrap3", index_view=IndexView(name=u"首页", url=BASE_URL))
+admin = Admin(name="HYTV", template_mode="bootstrap3", index_view=IndexView(name=u"首页", url=BASE_URL))
 
 # Common
 api.add_resource(ImageUpload, "/image_upload", endpoint="image_upload")
@@ -65,6 +65,9 @@ admin.add_view(GiftStatView(name=u"礼物统计", category=u"统计数据", endp
                             menu_icon_type='glyph', menu_icon_value='glyphicon-gift'))
 admin.add_view(InteractiveGameStatView(name=u"互动统计", category=u"统计数据", endpoint="inter_statistics",
                                        menu_icon_type='glyph', menu_icon_value='glyphicon-knight'))
+admin.add_view(CommonStatView(name=u"日常统计", category=u"统计数据", endpoint="common_statistics",
+                              session=db.session, model=DailyStatistics,
+                              menu_icon_type='glyph', menu_icon_value='glyphicon-stats'))
 
 # Auth
 admin.add_view(LoginView(name=u"登录", category=u"管理", endpoint='login',

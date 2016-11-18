@@ -16,26 +16,6 @@ def get_redis_jobstore(db=1, jobs_key="apscheduler:jobs", run_times_key="apsched
     return jobstore
 
 
-# class JobProcessor(object):
-#     def __init__(self, sched, queue):
-#         self.sched = sched
-#         self.queue = queue
-#
-#     def process_job(self):
-#         job = self.queue.get()
-#         print job
-#
-#     def receive_job(self, freq=1):
-#         while 1:
-#             while not self.queue.empty():
-#                 self.process_job()
-#             time.sleep(freq)
-#
-#     def run(self):
-#         self.ps = Process(target=self.receive_job)
-#         self.ps.start()
-
-
 def normalize_job_start_time(start_time, time_format="%Y-%m-%d %H:%M:%S"):
     if isinstance(start_time, (str, unicode)):
         st = datetime.strptime(start_time, time_format)

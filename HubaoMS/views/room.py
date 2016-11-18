@@ -1,9 +1,13 @@
 # -*- coding: utf-8 -*-
-from base import AuthenticatedModelView
+from sqlalchemy.sql import not_
+
+from models import AppUser, Device
+from base import BaseRobotToggleView
 from utils.formatter import format_thumbnail, format_room_channel, format_boolean
+from config import ROBOT_APP_ID
 
 
-class RoomView(AuthenticatedModelView):
+class RoomView(BaseRobotToggleView):
     column_auto_select_related = True
     column_list = ("rid", "uid", "user.cert.nickname", "channel", "name", "bulletin", "enable", "on_air",
                    "created_time", "screenshot", "chatroom")
@@ -32,4 +36,18 @@ class RoomView(AuthenticatedModelView):
         "created_time": lambda v, c, m, n: m.created_time.strftime("%Y-%m-%d %H:%M:%S")
     }
 
-    list_template = "thumbnail_list.html"
+    list_template = "robot_toggle_view.html"
+
+    def get_count_query(self, robot=True):
+        if robot:
+            return super(RoomView, self).get_count_query()
+        else:
+            return super(RoomView, self).get_count_query().join(AppUser).join(Device).\
+                filter(not_(Device.device_info["app_id"].astext.in_(ROBOT_APP_ID)))
+
+    def get_query(self, robot=True):
+        if robot:
+            return super(RoomView, self).get_query()
+        else:
+            return super(RoomView, self).get_query().join(AppUser).join(Device).\
+                filter(not_(Device.device_info["app_id"].astext.in_(ROBOT_APP_ID)))

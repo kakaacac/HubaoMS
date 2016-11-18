@@ -4,12 +4,12 @@ import time
 from collections import OrderedDict
 from flask import request, url_for
 from flask_admin import expose
-from sqlalchemy.sql import func, and_, or_, expression
+from sqlalchemy.sql import func, and_, not_, expression
 
 from base import AuthenticatedModelView, AuthenticatedBaseView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
     Room
-from config import ROBOT_DEVICE_BEGIN, ROBOT_DEVICE_END
+from config import ROBOT_APP_ID
 from utils.formatter import format_live_stat_actions, format_gift_stat_detail
 from utils.functions import num_of_page
 
@@ -79,8 +79,7 @@ class LiveShowStatView(AuthenticatedModelView):
                            GiftGiving.currency == 'vcy')).\
             outerjoin(AppUser,
                  and_(GiftGiving.uid == AppUser.uid,
-                      or_(AppUser.active_device < ROBOT_DEVICE_BEGIN,    # eliminate gifts given by robots
-                          AppUser.active_device > ROBOT_DEVICE_END))).\
+                      not_(AppUser.device.device_info["app_id"].astext.in_(ROBOT_APP_ID)))).\
             filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
             group_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
@@ -549,3 +548,27 @@ class InteractiveGameStatView(AuthenticatedBaseView):
         }
 
         return self.render("statistics/interactive_game_list.html", **kwargs)
+
+
+class CommonStatView(AuthenticatedModelView):
+    column_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "DAU", "user_recharged",
+                   "recharged_amount")
+    column_default_sort = ("processing_date", True)
+    column_searchable_list = ("processing_date",)
+    column_sortable_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "DAU", "user_recharged",
+                            "recharged_amount")
+    column_labels = {
+        "processing_date": u"日期",
+        "user_registered": u"新注册用户",
+        "uesr_logined": u"登录人数",
+        "total_user": u"总注册用户",
+        "DAU": u"日活跃用户",
+        "user_recharged": u"充值人数",
+        "recharged_amount": u"充值总额（单位：元）"
+    }
+
+    column_formatters = {
+        "processing_date": lambda v, c, m, n: m.processing_date.strftime("%Y-%m-%d")
+    }
+
+    list_template = "indexed_thumbnail_list.html"
