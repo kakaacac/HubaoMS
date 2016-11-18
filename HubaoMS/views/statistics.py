@@ -551,18 +551,18 @@ class InteractiveGameStatView(AuthenticatedBaseView):
 
 
 class CommonStatView(AuthenticatedModelView):
-    column_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "DAU", "user_recharged",
+    column_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "dau", "user_recharged",
                    "recharged_amount")
     column_default_sort = ("processing_date", True)
     column_searchable_list = ("processing_date",)
-    column_sortable_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "DAU", "user_recharged",
+    column_sortable_list = ("processing_date", "user_registered", "uesr_logined", "total_user", "dau", "user_recharged",
                             "recharged_amount")
     column_labels = {
         "processing_date": u"日期",
         "user_registered": u"新注册用户",
         "uesr_logined": u"登录人数",
         "total_user": u"总注册用户",
-        "DAU": u"日活跃用户",
+        "dau": u"日活跃用户",
         "user_recharged": u"充值人数",
         "recharged_amount": u"充值总额（单位：元）"
     }
