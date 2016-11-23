@@ -601,7 +601,7 @@ class AccountManagementView(BaseUserView):
             form = DateSelectForm()
             if form.validate_on_submit():
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = now + timedelta(seconds=block_time)
+                expired_time = now + timedelta(days=block_time)
 
                 # Store expiration info at redis
                 redis.master().hset("control:block:account",
@@ -665,7 +665,7 @@ class AccountManagementView(BaseUserView):
             if form.validate_on_submit():
                 now = datetime.now()
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = now + timedelta(seconds=block_time)
+                expired_time = now + timedelta(days=block_time)
 
                 #cut off video stream
                 self.control_video_stream(rid, room.user.uuid)
