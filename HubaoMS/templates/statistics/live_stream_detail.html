@@ -9,7 +9,7 @@
 <table class="table table-striped table-bordered table-hover">
     <tbody>
     <tr>
-        <th>直播总时长</th><td>{{ duration }}</td>
+        <th>直播总时长</th><td>{{ duration if duration != "-1" else '直播中' }}</td>
     </tr>
     <tr>
         <th>互动总时长</th><td>{% if is_interactive %}{{ interactives_info.duration }}{% else %}0{% endif %}</td>

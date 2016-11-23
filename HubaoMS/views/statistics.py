@@ -137,8 +137,11 @@ class LiveShowStatView(AuthenticatedModelView):
             stream = streams[0]
             next_stream = None
 
-        duration = stream[1].close_time - stream[1].start_time
-        duration -= timedelta(microseconds=duration.microseconds)
+        if stream[1].close_time:
+            duration = stream[1].close_time - stream[1].start_time
+            duration -= timedelta(microseconds=duration.microseconds)
+        else:
+            duration = "-1"
 
         refund_limit = max(stream[1].close_time + timedelta(seconds=1), next_stream[1].close_time) if next_stream \
             else stream[1].close_time + timedelta(seconds=1)

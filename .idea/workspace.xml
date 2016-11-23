@@ -5,7 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e9ce7112-8c95-4496-9439-35cb152307fe" name="Default" comment="">
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/user.py" afterPath="$PROJECT_DIR$/HubaoMS/views/user.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/statistics.py" afterPath="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
     </list>
     <ignored path="HubaoMS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -26,34 +27,34 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="props_view.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HubaoMS/templates/content/props_view.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="-11.774194">
-              <caret line="23" column="83" selection-start-line="23" selection-start-column="83" selection-end-line="23" selection-end-column="83" />
-              <folding />
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="app.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/app.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="51" column="30" selection-start-line="51" selection-start-column="30" selection-end-line="51" selection-end-column="30" />
+              <caret line="39" column="39" selection-start-line="39" selection-start-column="39" selection-end-line="39" selection-end-column="39" />
               <folding />
             </state>
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="statistics.py" pinned="false" current-in-tab="false">
+      <file leaf-file-name="statistics.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HubaoMS/views/statistics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="81" column="35" selection-start-line="81" selection-start-column="35" selection-end-line="81" selection-end-column="35" />
+            <state vertical-scroll-proportion="0.7281292">
+              <caret line="227" column="44" selection-start-line="227" selection-start-column="44" selection-end-line="227" selection-end-column="44" />
               <folding>
                 <element signature="e#24#64#0" expanded="true" />
               </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="live_stream_detail.html" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="-7.806452">
+              <caret line="11" column="68" selection-start-line="11" selection-start-column="68" selection-end-line="11" selection-end-column="68" />
+              <folding />
             </state>
           </provider>
         </entry>
@@ -78,18 +79,6 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="content.py" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HubaoMS/views/content.py">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="236" column="0" selection-start-line="236" selection-start-column="0" selection-end-line="236" selection-end-column="0" />
-              <folding>
-                <element signature="e#24#35#0" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
           <provider selected="true" editor-type-id="text-editor">
@@ -100,13 +89,25 @@
           </provider>
         </entry>
       </file>
-      <file leaf-file-name="user.py" pinned="false" current-in-tab="true">
+      <file leaf-file-name="user.py" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/views/user.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.490284">
-              <caret line="603" column="51" selection-start-line="603" selection-start-column="51" selection-end-line="603" selection-end-column="51" />
+            <state vertical-scroll-proportion="0.0">
+              <caret line="609" column="0" selection-start-line="609" selection-start-column="0" selection-end-line="609" selection-end-column="0" />
               <folding>
                 <element signature="e#24#35#0" expanded="true" />
+              </folding>
+            </state>
+          </provider>
+        </entry>
+      </file>
+      <file leaf-file-name="test.py" pinned="false" current-in-tab="false">
+        <entry file="file://F:/Jayden/projects/test.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="56" column="79" selection-start-line="56" selection-start-column="79" selection-end-line="56" selection-end-column="79" />
+              <folding>
+                <element signature="e#24#66#0" expanded="true" />
               </folding>
             </state>
           </provider>
@@ -155,7 +156,6 @@
         <option value="$PROJECT_DIR$/HubaoMS/utils/validators.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/logger.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/__init__.py" />
-        <option value="F:/Jayden/projects/test.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/interactives_stat.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/interactive_game_stat.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/interactive_game_list.html" />
@@ -186,18 +186,19 @@
         <option value="$PROJECT_DIR$/HubaoMS/templates/message/broadcast_edit_view.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/model_list.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/simple_list.html" />
-        <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/task.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/task_edit.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/user_extra_info.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/user_property.html" />
         <option value="$PROJECT_DIR$/HubaoMS/views/content.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/content/props_view.html" />
-        <option value="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/formatter.py" />
         <option value="$PROJECT_DIR$/HubaoMS/models.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/recharge_detail.html" />
         <option value="$PROJECT_DIR$/HubaoMS/views/user.py" />
+        <option value="F:/Jayden/projects/test.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" />
       </list>
     </option>
   </component>
@@ -628,8 +629,8 @@
     <recent_temporary>
       <list size="3">
         <item index="0" class="java.lang.String" itemvalue="Python.app" />
-        <item index="1" class="java.lang.String" itemvalue="Python.NetEase" />
-        <item index="2" class="java.lang.String" itemvalue="Python.test" />
+        <item index="1" class="java.lang.String" itemvalue="Python.test" />
+        <item index="2" class="java.lang.String" itemvalue="Python.NetEase" />
       </list>
     </recent_temporary>
   </component>
@@ -647,7 +648,7 @@
     <servers />
   </component>
   <component name="ToolWindowManager">
-    <frame x="-8" y="-8" width="1936" height="1056" extended-state="6" />
+    <frame x="-8" y="-8" width="1936" height="1056" extended-state="7" />
     <editor active="true" />
     <layout>
       <window_info id="Project" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.12434141" sideWeight="0.5" order="0" side_tool="false" content_ui="combo" />
@@ -655,7 +656,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.24377032" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.16359697" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32936078" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -694,27 +695,6 @@
     <watches-manager />
   </component>
   <component name="editorHistoryManager">
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/auth.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="2" column="19" selection-start-line="2" selection-start-column="19" selection-end-line="2" selection-end-column="19" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/common.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="4" column="9" selection-start-line="4" selection-start-column="9" selection-end-line="4" selection-end-column="9" />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/compere.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="185" column="44" selection-start-line="185" selection-start-column="44" selection-end-line="185" selection-end-column="44" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/views/error.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -940,13 +920,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="0" column="0" selection-start-line="0" selection-start-column="0" selection-end-line="0" selection-end-column="0" />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/templates/user/task_edit.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="-0.0">
@@ -999,7 +972,7 @@
         <state vertical-scroll-proportion="0.0">
           <caret line="236" column="0" selection-start-line="236" selection-start-column="0" selection-end-line="236" selection-end-column="0" />
           <folding>
-            <element signature="e#24#35#0" expanded="true" />
+            <element signature="e#24#35#0" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1012,29 +985,11 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/app.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="51" column="30" selection-start-line="51" selection-start-column="30" selection-end-line="51" selection-end-column="30" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="35" column="16" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="17" />
           <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/statistics.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="81" column="35" selection-start-line="81" selection-start-column="35" selection-end-line="81" selection-end-column="35" />
-          <folding>
-            <element signature="e#24#64#0" expanded="true" />
-          </folding>
         </state>
       </provider>
     </entry>
@@ -1070,12 +1025,66 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://F:/test/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.85500747">
+          <caret line="26" column="23" selection-start-line="26" selection-start-column="23" selection-end-line="26" selection-end-column="23" />
+          <folding>
+            <element signature="e#25#34#0" expanded="false" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/views/user.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.490284">
-          <caret line="603" column="51" selection-start-line="603" selection-start-column="51" selection-end-line="603" selection-end-column="51" />
+        <state vertical-scroll-proportion="0.0">
+          <caret line="609" column="0" selection-start-line="609" selection-start-column="0" selection-end-line="609" selection-end-column="0" />
           <folding>
             <element signature="e#24#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://D:/Python27/Lib/site-packages/requests/api.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.33333334">
+          <caret line="59" column="4" selection-start-line="59" selection-start-column="4" selection-end-line="59" selection-end-column="4" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://F:/Jayden/projects/test.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="56" column="79" selection-start-line="56" selection-start-column="79" selection-end-line="56" selection-end-column="79" />
+          <folding>
+            <element signature="e#24#66#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/app.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="39" column="39" selection-start-line="39" selection-start-column="39" selection-end-line="39" selection-end-column="39" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="-7.806452">
+          <caret line="11" column="68" selection-start-line="11" selection-start-column="68" selection-end-line="11" selection-end-column="68" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/views/statistics.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.7281292">
+          <caret line="227" column="44" selection-start-line="227" selection-start-column="44" selection-end-line="227" selection-end-column="44" />
+          <folding>
+            <element signature="e#24#64#0" expanded="true" />
           </folding>
         </state>
       </provider>
