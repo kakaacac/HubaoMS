@@ -1,0 +1,50 @@
+{% extends 'base.html' %}
+
+{% block body %}
+    <p><a class="btn btn-primary" href="{{ url_for('.create_task_view') }}">添加道具</a></p>
+    <table class="table table-striped table-bordered table-hover">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>道具名称</th>
+                <th>图片</th>
+                <th>描述</th>
+                <th>过期时间</th>
+                <th>价值</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        {% for item in data %}
+        <tr>
+            <td>{{ item.prop_id }}</td>
+            <td>{{ item.name }}</td>
+            <td><img src="{{ item.img }}"></td>
+            <td>{{ item.desc }}</td>
+            <td>{% if item.period == -1 %}永不过期{% else %}{{ item.period }}{% endif %}</td>
+            <td>{{ item.value }}{{ '小草' if item.currency == 'vfc' else '骨头' }}</td>
+            <td>
+                <a class="btn btn-default" href="{{ url_for('.task_edit_view', task_id=row.task_id) }}">修改</a>
+                <br>
+                <a class="btn btn-default delete-btn" href="{{ url_for('.delete_task', task_id=row.task_id) }}">删除</a>
+            </td>
+        </tr>
+        {% else %}
+        <tr>
+            <td colspan="999">
+                {% block empty_list_message %}
+                <div class="text-center">Nothing Here...</div>
+                {% endblock %}
+            </td>
+        </tr>
+        {% endfor %}
+    </table>
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+<script>
+    $('.delete-btn').on('click', function(){
+        return confirm("您确定要删除此项吗？");
+    });
+</script>
+{% endblock %}
+

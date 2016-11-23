@@ -1,16 +1,14 @@
 # -*- coding: utf-8 -*-
+import json
 from flask import flash, url_for, request
 from flask_admin import expose
-from flask_admin.helpers import get_redirect_target, flash_errors
-from flask_admin.form import FormOpts
-from flask_admin.babel import gettext
-from flask_admin.model.helpers import get_mdict_item_or_list
 
-from base import AuthenticatedModelView
+from base import AuthenticatedModelView, AuthenticatedBaseView
 from models import Banner, db, AppUser, Room, UserCertification
 from utils.formatter import format_thumbnail, format_banner_actions
 from forms import BannerEditForm
 from utils.functions import is_file_exists, json_response, abs_redirect
+from config import PROPS_CONFIG
 
 class BannerView(AuthenticatedModelView):
     column_list = ("id", "room_id", "room.name", "image", "login_name", "compere.display_name",
@@ -214,5 +212,31 @@ class RoomTagsView(AuthenticatedModelView):
 
     form_columns = ("id", "name", "mode", "weight")
     form_choices = {"mode": [("1", u"个人"), ("2", u"互动")]}
+
+
+class GameConfigView(AuthenticatedBaseView):
+    @expose()
+    def index_view(self):
+        return self.render("content/interactive_game_config.html")
+
+
+class PropsView(AuthenticatedBaseView):
+    @staticmethod
+    def load_props_config():
+        with open(PROPS_CONFIG) as f:
+            return json.load(f)
+
+    @expose()
+    def props_list(self):
+        props = []
+        for item in self.load_props_config()["prop_info"]:
+            if int(item["prop_id"]) > 1000:
+                currency, value = item["value"].split(":")
+                item.update({"currency": currency, "value":float(value)})
+                props.append(item)
+
+        return self.render("content/props_view.html", data=props)
+
+
 
 

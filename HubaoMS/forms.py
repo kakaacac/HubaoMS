@@ -80,6 +80,14 @@ class BroadcastEditForm(Form):
     cancel = SubmitField(label=u"取消")
 
 
+class DiceEditForm(Form):
+    pass
+
+
+class QnaEditForm(Form):
+    pass
+
+
 
 
 

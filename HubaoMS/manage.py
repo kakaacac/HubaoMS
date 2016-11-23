@@ -7,7 +7,7 @@ from views.user import UserView, FeedbackView, TaskView, AccountManagementView
 from views.auth import LoginView, LogoutView
 from views.compere import CompereView, CompereVerificationView, Withdrawal, CompereConf
 from views.room import RoomView
-from views.content import BannerView, RoomTagsView
+from views.content import BannerView, RoomTagsView, GameConfigView
 from views.common import ImageUpload
 from views.message import BroadcastView
 from views.statistics import LiveShowStatView, GiftStatView, InteractiveGameStatView, CommonStatView
@@ -51,6 +51,8 @@ admin.add_view(BannerView(name=u"轮播图列表", category=u"内容管理", end
                           menu_icon_type='glyph', menu_icon_value='glyphicon-picture'))
 admin.add_view(RoomTagsView(name=u"房间标签", category=u"内容管理", endpoint="tags", session=db.session, model=RoomTags,
                             menu_icon_type='glyph', menu_icon_value='glyphicon-tags'))
+admin.add_view(GameConfigView(name=u"互动设置", category=u"内容管理", endpoint="game_config",
+                            menu_icon_type='glyph', menu_icon_value='glyphicon-king'))
 
 # Message
 admin.add_view(BroadcastView(name=u"广播列表", category=u"消息发布", endpoint="broadcast", session=db.session,

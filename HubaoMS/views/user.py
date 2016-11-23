@@ -223,7 +223,7 @@ class TaskView(AuthenticatedBaseView):
                 "currency": award_info[1],
                 "amount": award_info[2]
             })
-        return self.render("user/task.html", data=tasks)
+        return self.render("user/task_view.html", data=tasks)
 
     @expose('/edit/<task_id>', methods=["GET",])
     def task_edit_view(self, task_id):

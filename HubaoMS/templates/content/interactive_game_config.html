@@ -1,0 +1,18 @@
+{% extends 'base.html' %}
+{% block body %}
+<div>
+  <ul class="nav nav-tabs" role="tablist">
+    <li role="presentation" class="active"><a href="#dice" aria-controls="dice" role="tab" data-toggle="tab">大话骰</a></li>
+    <li role="presentation"><a href="#qna" aria-controls="qna" role="tab" data-toggle="tab">IQ大战</a></li>
+  </ul>
+
+  <div class="tab-content">
+    <div role="tabpanel" class="tab-pane fade in active" id="dice">1</div>
+    <div role="tabpanel" class="tab-pane fade" id="qna">2</div>
+  </div>
+
+</div>
+{% endblock %}
+{% block tail_js %}
+{{ super() }}
+{% endblock %}

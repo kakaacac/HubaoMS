@@ -8,7 +8,7 @@ from sqlalchemy.sql import func, and_, not_, expression
 
 from base import AuthenticatedModelView, AuthenticatedBaseView
 from models import LiveStreamHistory, DailyStatistics, GameStat, GiftGiving, AppUser, UserCertification, Refund, db, \
-    Room
+    Room, Device
 from config import ROBOT_APP_ID
 from utils.formatter import format_live_stat_actions, format_gift_stat_detail
 from utils.functions import num_of_page
@@ -77,10 +77,10 @@ class LiveShowStatView(AuthenticatedModelView):
                            LiveStreamHistory.close_time >= GiftGiving.send_time,
                            GiftGiving.prop_id < 1000,
                            GiftGiving.currency == 'vcy')).\
-            outerjoin(AppUser,
-                 and_(GiftGiving.uid == AppUser.uid,
-                      not_(AppUser.device.device_info["app_id"].astext.in_(ROBOT_APP_ID)))).\
-            filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
+            outerjoin(AppUser, GiftGiving.uid == AppUser.uid).\
+            outerjoin(Device, AppUser.active_device == Device.device_id).\
+            filter(stat.processing_date == func.date(LiveStreamHistory.start_time),
+                   not_(Device.device_info["app_id"].astext.in_(ROBOT_APP_ID))).\
             group_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             paginate(page, self.page_size, False)
@@ -560,7 +560,7 @@ class CommonStatView(AuthenticatedModelView):
     column_labels = {
         "processing_date": u"日期",
         "user_registered": u"新注册用户",
-        "uesr_logined": u"登录人数",
+        "uesr_logined": u"登录设备数",
         "total_user": u"总注册用户",
         "dau": u"日活跃用户",
         "user_recharged": u"充值人数",
