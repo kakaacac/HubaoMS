@@ -40,16 +40,18 @@ class BaseUserView(BaseRobotToggleView):
 
 class UserView(BaseUserView):
     column_auto_select_related = True
-    column_list = ("uid", "cert.nickname", "display_name", "avatar", "sex", "compere.auth_status", "phone.phone",
-                   "cert.created_time", "level", "actions")
+    column_list = ("uid", "cert.nickname", "display_name", "room.rid", "avatar", "sex", "compere.auth_status",
+                   "phone.phone", "cert.created_time", "level", "actions")
     column_filters = ("level", "compere.auth_status")
     column_default_sort = "uid"
-    column_searchable_list = ("uid", "cert.nickname", "phone.phone", "display_name")
-    column_sortable_list = ("uid", "cert.nickname", "sex", "compere.auth_status", "cert.created_time", "level", "display_name")
+    column_searchable_list = ("uid", "cert.nickname", "phone.phone", "display_name", "room.rid")
+    column_sortable_list = ("uid", "cert.nickname", "sex", "compere.auth_status", "cert.created_time", "level",
+                            "display_name", "room.rid")
     column_labels = {
         "uid": u"用户 ID",
         "cert.nickname": u"登录名",
         "display_name": u"用户昵称",
+        "room.rid": u"房间号",
         "avatar": u"头像",
         "sex": u"性别",
         "compere.auth_status": u"认证主播",

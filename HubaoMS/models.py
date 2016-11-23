@@ -227,6 +227,8 @@ class Payment(db.Model):
     money = db.Column(db.Float)
     product_id = db.Column(db.String(128))
     pay_type = db.Column(db.String(64))
+    vcy_increment = db.Column(db.Float)
+    vfc_increment = db.Column(db.Float)
 
 
 class CompereVerification(db.Model):

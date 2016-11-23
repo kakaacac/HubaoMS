@@ -186,7 +186,7 @@ def format_boolean(attr, true_color=None, false_color=None):
 def format_broadcast_range(view, context, model, name):
     if model.broadcast_range == "tag":
         return u"标签"
-    elif model.broadcast_range == "specified":
+    elif model.broadcast_range == "spec":
         return u"指定"
     else:
         return u"全部"

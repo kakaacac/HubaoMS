@@ -16,6 +16,8 @@
         <th>状态</th>
         <th>币种</th>
         <th>价钱</th>
+        <th>增加小草</th>
+        <th>增加骨头</th>
         <th>产品号</th>
         <th>支付类型</th>
     </tr>
@@ -31,6 +33,8 @@
         <td>{{ '成功' if row.success else '失败' }}</td>
         <td>{{ '人民币' if row.currency.lower() == "rmb" else row.currency }}</td>
         <td>{{ row.money }}</td>
+        <td>{{ row.vfc_increment }}</td>
+        <td>{{ row.vcy_increment }}</td>
         <td>{{ row.product_id }}</td>
         <td>{{ row.pay_type }}</td>
     </tr>
