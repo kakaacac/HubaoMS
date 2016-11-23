@@ -5,32 +5,8 @@
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e9ce7112-8c95-4496-9439-35cb152307fe" name="Default" comment="">
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/HubaoMS/templates/base.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/HubaoMS/templates/content/interactive_game_config.html" />
-      <change type="NEW" beforePath="" afterPath="$PROJECT_DIR$/HubaoMS/templates/content/props_view.html" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/.idea/workspace.xml" afterPath="$PROJECT_DIR$/.idea/workspace.xml" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/forms.py" afterPath="$PROJECT_DIR$/HubaoMS/forms.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/manage.py" afterPath="$PROJECT_DIR$/HubaoMS/manage.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/auth/login.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/auth/login.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/auth/logout.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/auth/logout.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/compere/compere_conf.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/compere/compere_conf.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/compere/compere_extra_info.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/compere/compere_extra_info.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/content/banner_edit.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/content/banner_edit.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/content/banner_extra_info.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/content/banner_extra_info.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/error/404.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/error/404.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/index.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/index.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/message/broadcast_edit_view.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/message/broadcast_edit_view.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/model_list.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/model_list.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/simple_list.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/simple_list.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/statistics/live_stream_detail.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/user/task_edit.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/user/task_edit.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/user/user_extra_info.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/user/user_extra_info.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/templates/user/user_property.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/user/user_property.html" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/utils/NetEase.py" afterPath="$PROJECT_DIR$/HubaoMS/utils/NetEase.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/content.py" afterPath="$PROJECT_DIR$/HubaoMS/views/content.py" />
       <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/statistics.py" afterPath="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
-      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/views/user.py" afterPath="$PROJECT_DIR$/HubaoMS/views/user.py" />
-      <change type="MOVED" beforePath="$PROJECT_DIR$/HubaoMS/templates/user/task.html" afterPath="$PROJECT_DIR$/HubaoMS/templates/user/task_view.html" />
     </list>
     <ignored path="HubaoMS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -51,18 +27,6 @@
   </component>
   <component name="FileEditorManager">
     <leaf SIDE_TABS_SIZE_LIMIT_KEY="300">
-      <file leaf-file-name="task_view.html" pinned="false" current-in-tab="false">
-        <entry file="file://$PROJECT_DIR$/HubaoMS/templates/user/task_view.html">
-          <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.0">
-              <caret line="24" column="28" selection-start-line="24" selection-start-column="28" selection-end-line="24" selection-end-column="28" />
-              <folding>
-                <element signature="n#style#0;n#img#0;n#td#3;n#tr#0;n#table#0;n#!!top" expanded="true" />
-              </folding>
-            </state>
-          </provider>
-        </entry>
-      </file>
       <file leaf-file-name="props_view.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/templates/content/props_view.html">
           <provider selected="true" editor-type-id="text-editor">
@@ -86,8 +50,8 @@
       <file leaf-file-name="statistics.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HubaoMS/views/statistics.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="0.37419355">
-              <caret line="562" column="31" selection-start-line="562" selection-start-column="31" selection-end-line="562" selection-end-column="31" />
+            <state vertical-scroll-proportion="0.6893204">
+              <caret line="81" column="35" selection-start-line="81" selection-start-column="35" selection-end-line="81" selection-end-column="35" />
               <folding>
                 <element signature="e#24#64#0" expanded="true" />
               </folding>
@@ -117,6 +81,16 @@
           </provider>
         </entry>
       </file>
+      <file leaf-file-name="config.py" pinned="false" current-in-tab="false">
+        <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
+          <provider selected="true" editor-type-id="text-editor">
+            <state vertical-scroll-proportion="0.0">
+              <caret line="35" column="16" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="17" />
+              <folding />
+            </state>
+          </provider>
+        </entry>
+      </file>
       <file leaf-file-name="thumbnail_list.html" pinned="false" current-in-tab="false">
         <entry file="file://$PROJECT_DIR$/HubaoMS/templates/thumbnail_list.html">
           <provider selected="true" editor-type-id="text-editor">
@@ -131,8 +105,10 @@
         <entry file="file://$PROJECT_DIR$/HubaoMS/views/user.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="14" column="31" selection-start-line="14" selection-start-column="31" selection-end-line="14" selection-end-column="31" />
-              <folding />
+              <caret line="117" column="56" selection-start-line="117" selection-start-column="56" selection-end-line="117" selection-end-column="56" />
+              <folding>
+                <element signature="e#24#35#0" expanded="true" />
+              </folding>
             </state>
           </provider>
         </entry>
@@ -219,9 +195,9 @@
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/task_edit.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/user_extra_info.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/user_property.html" />
-        <option value="$PROJECT_DIR$/HubaoMS/views/user.py" />
         <option value="$PROJECT_DIR$/HubaoMS/views/content.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/content/props_view.html" />
+        <option value="$PROJECT_DIR$/HubaoMS/views/user.py" />
         <option value="$PROJECT_DIR$/HubaoMS/views/statistics.py" />
       </list>
     </option>
@@ -680,7 +656,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.46478873" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.18743229" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32936078" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -1007,20 +983,12 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="35" column="17" selection-start-line="35" selection-start-column="17" selection-end-line="35" selection-end-column="82" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/templates/user/task_view.html">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="24" column="28" selection-start-line="24" selection-start-column="28" selection-end-line="24" selection-end-column="28" />
           <folding>
-            <element signature="n#style#0;n#img#0;n#td#3;n#tr#0;n#table#0;n#!!top" expanded="true" />
+            <element signature="n#style#0;n#img#0;n#td#3;n#tr#0;n#table#0;n#!!top" expanded="false" />
           </folding>
         </state>
       </provider>
@@ -1045,14 +1013,6 @@
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
           <caret line="7" column="6" selection-start-line="7" selection-start-column="6" selection-end-line="7" selection-end-column="6" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/views/user.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="14" column="31" selection-start-line="14" selection-start-column="31" selection-end-line="14" selection-end-column="31" />
           <folding />
         </state>
       </provider>
@@ -1091,10 +1051,28 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="35" column="16" selection-start-line="35" selection-start-column="0" selection-end-line="35" selection-end-column="17" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/views/user.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="117" column="56" selection-start-line="117" selection-start-column="56" selection-end-line="117" selection-end-column="56" />
+          <folding>
+            <element signature="e#24#35#0" expanded="true" />
+          </folding>
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/views/statistics.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.37419355">
-          <caret line="562" column="31" selection-start-line="562" selection-start-column="31" selection-end-line="562" selection-end-column="31" />
+        <state vertical-scroll-proportion="0.6893204">
+          <caret line="81" column="35" selection-start-line="81" selection-start-column="35" selection-end-line="81" selection-end-column="35" />
           <folding>
             <element signature="e#24#64#0" expanded="true" />
           </folding>

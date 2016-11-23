@@ -78,9 +78,9 @@ class LiveShowStatView(AuthenticatedModelView):
                            GiftGiving.prop_id < 1000,
                            GiftGiving.currency == 'vcy')).\
             outerjoin(AppUser, GiftGiving.uid == AppUser.uid).\
-            outerjoin(Device, AppUser.active_device == Device.device_id).\
-            filter(stat.processing_date == func.date(LiveStreamHistory.start_time),
-                   not_(Device.device_info["app_id"].astext.in_(ROBOT_APP_ID))).\
+            outerjoin(Device, and_(AppUser.active_device == Device.device_id,
+                                   not_(Device.device_info["app_id"].astext.in_(ROBOT_APP_ID)))).\
+            filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
             group_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             order_by(LiveStreamHistory.start_time, LiveStreamHistory.rid).\
             paginate(page, self.page_size, False)
