@@ -140,16 +140,18 @@ class LiveShowStatView(AuthenticatedModelView):
         if stream[1].close_time:
             duration = stream[1].close_time - stream[1].start_time
             duration -= timedelta(microseconds=duration.microseconds)
+
+            refund_limit = max(stream[1].close_time + timedelta(seconds=1), next_stream[1].close_time) if next_stream \
+                else stream[1].close_time + timedelta(seconds=1)
         else:
             duration = "-1"
+            refund_limit = datetime.now()
 
-        refund_limit = max(stream[1].close_time + timedelta(seconds=1), next_stream[1].close_time) if next_stream \
-            else stream[1].close_time + timedelta(seconds=1)
+        interactives = GameStat.query.filter(GameStat.room_id == room_id, GameStat.game_start >= start_time)
 
-        interactives = GameStat.query.filter(GameStat.room_id == room_id,
-                                             GameStat.game_start >= start_time,
-                                             GameStat.game_end <= stream[1].close_time).\
-            order_by(GameStat.game_start).all()
+        if stream[1].close_time:
+            interactives = interactives.filter(GameStat.game_end <= stream[1].close_time)
+        interactives = interactives.order_by(GameStat.game_start).all()
 
         # interactive games info
         is_interactive = len(interactives) > 0
@@ -191,9 +193,13 @@ class LiveShowStatView(AuthenticatedModelView):
         if is_paid:
             tickets = GiftGiving.query.filter(GiftGiving.compere_id == stream[1].uid,
                                               GiftGiving.send_time >= start_time,
-                                              GiftGiving.send_time <= stream[1].close_time,
-                                              GiftGiving.prop_id >= 1000).\
-                with_entities(GiftGiving.currency, func.sum(GiftGiving.value)).group_by(GiftGiving.currency).all()
+                                              GiftGiving.prop_id >= 1000)
+
+            if stream[1].close_time:
+                tickets = tickets.filter(GiftGiving.send_time <= stream[1].close_time)
+
+            tickets = tickets.with_entities(GiftGiving.currency, func.sum(GiftGiving.value)).\
+                group_by(GiftGiving.currency).all()
 
             refunds = Refund.query.filter(Refund.compere_id == stream[0],
                                           Refund.refund_time >= start_time,
@@ -204,11 +210,11 @@ class LiveShowStatView(AuthenticatedModelView):
             refund_info = {"vfc": 0, "vcy": 0}
 
             for item in tickets:
-                ticket_info[item.currency] += item.value
+                ticket_info[item.currency] += item[1]
 
             for item in refunds:
-                ticket_info[item.currency] -= item.value
-                refund_info[item.currency] += item.value
+                ticket_info[item.currency] -= item[1]
+                refund_info[item.currency] += item[1]
         else:
             ticket_info = None
             refund_info = None
