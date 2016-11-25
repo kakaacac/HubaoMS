@@ -169,7 +169,7 @@ class JobProcessor(object):
 
                 self.disconnect()
                 time.sleep(SCHEDULER_FREQ)
-                
+
             except Exception as e:
                 logging.error(e.message)
 
