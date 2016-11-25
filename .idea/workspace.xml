@@ -2,11 +2,12 @@
 <project version="4">
   <component name="BookmarkManager">
     <bookmark url="file://$PROJECT_DIR$/HubaoMS/manage.py" line="18" />
-    <bookmark url="file://$PROJECT_DIR$/HubaoMS/scheduler.py" line="132" />
+    <bookmark url="file://$PROJECT_DIR$/HubaoMS/scheduler.py" line="133" />
   </component>
   <component name="ChangeListManager">
     <list default="true" id="e9ce7112-8c95-4496-9439-35cb152307fe" name="Default" comment="">
-      <change type="MOVED" beforePath="$PROJECT_DIR$/scheduler.py" afterPath="$PROJECT_DIR$/HubaoMS/scheduler.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/config.py" afterPath="$PROJECT_DIR$/HubaoMS/config.py" />
+      <change type="MODIFICATION" beforePath="$PROJECT_DIR$/HubaoMS/scheduler.py" afterPath="$PROJECT_DIR$/HubaoMS/scheduler.py" />
     </list>
     <ignored path="HubaoMS.iws" />
     <ignored path=".idea/workspace.xml" />
@@ -42,8 +43,8 @@
       <file leaf-file-name="scheduler.py" pinned="false" current-in-tab="true">
         <entry file="file://$PROJECT_DIR$/HubaoMS/scheduler.py">
           <provider selected="true" editor-type-id="text-editor">
-            <state vertical-scroll-proportion="4.012158">
-              <caret line="120" column="37" selection-start-line="120" selection-start-column="37" selection-end-line="120" selection-end-column="37" />
+            <state vertical-scroll-proportion="3.5075989">
+              <caret line="164" column="41" selection-start-line="164" selection-start-column="41" selection-end-line="164" selection-end-column="41" />
               <folding>
                 <element signature="e#24#39#0" expanded="true" />
               </folding>
@@ -55,7 +56,7 @@
         <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
           <provider selected="true" editor-type-id="text-editor">
             <state vertical-scroll-proportion="0.0">
-              <caret line="24" column="58" selection-start-line="24" selection-start-column="50" selection-end-line="24" selection-end-column="58" />
+              <caret line="9" column="19" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
               <folding />
             </state>
           </provider>
@@ -120,7 +121,6 @@
   <component name="IdeDocumentHistory">
     <option name="CHANGED_PATHS">
       <list>
-        <option value="D:/Python27/Lib/site-packages/flask_admin/contrib/sqla/view.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/user/user_view.html" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/validators.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/logger.py" />
@@ -137,7 +137,6 @@
         <option value="$PROJECT_DIR$/HubaoMS/views/room.py" />
         <option value="$PROJECT_DIR$/HubaoMS/utils/scheduler.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/base.html" />
-        <option value="$PROJECT_DIR$/HubaoMS/config.py" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/auth/login.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/auth/logout.html" />
         <option value="$PROJECT_DIR$/HubaoMS/templates/compere/compere_conf.html" />
@@ -171,6 +170,8 @@
         <option value="$PROJECT_DIR$/HubaoMS/views/user.py" />
         <option value="$PROJECT_DIR$/HubaoMS/app.py" />
         <option value="$PROJECT_DIR$/scheduler.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/config.py" />
+        <option value="$PROJECT_DIR$/HubaoMS/scheduler.py" />
       </list>
     </option>
   </component>
@@ -492,7 +493,7 @@
       <window_info id="Event Log" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="7" side_tool="true" content_ui="tabs" />
       <window_info id="Python Console" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="10" side_tool="false" content_ui="tabs" />
       <window_info id="Version Control" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="8" side_tool="false" content_ui="tabs" />
-      <window_info id="Run" active="true" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25568798" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
+      <window_info id="Run" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="true" show_stripe_button="true" weight="0.25568798" sideWeight="0.5" order="2" side_tool="false" content_ui="tabs" />
       <window_info id="Structure" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.25" sideWeight="0.5" order="1" side_tool="false" content_ui="tabs" />
       <window_info id="Terminal" active="false" anchor="bottom" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.32936078" sideWeight="0.5" order="9" side_tool="false" content_ui="tabs" />
       <window_info id="Favorites" active="false" anchor="left" auto_hide="false" internal_type="DOCKED" type="DOCKED" visible="false" show_stripe_button="true" weight="0.33" sideWeight="0.5" order="2" side_tool="true" content_ui="tabs" />
@@ -854,14 +855,6 @@
         </state>
       </provider>
     </entry>
-    <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
-      <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="0.0">
-          <caret line="24" column="58" selection-start-line="24" selection-start-column="50" selection-end-line="24" selection-end-column="58" />
-          <folding />
-        </state>
-      </provider>
-    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/utils/RedisPool/redis_pool.py">
       <provider selected="true" editor-type-id="text-editor">
         <state vertical-scroll-proportion="0.0">
@@ -918,10 +911,18 @@
         </state>
       </provider>
     </entry>
+    <entry file="file://$PROJECT_DIR$/HubaoMS/config.py">
+      <provider selected="true" editor-type-id="text-editor">
+        <state vertical-scroll-proportion="0.0">
+          <caret line="9" column="19" selection-start-line="9" selection-start-column="19" selection-end-line="9" selection-end-column="19" />
+          <folding />
+        </state>
+      </provider>
+    </entry>
     <entry file="file://$PROJECT_DIR$/HubaoMS/scheduler.py">
       <provider selected="true" editor-type-id="text-editor">
-        <state vertical-scroll-proportion="4.012158">
-          <caret line="120" column="37" selection-start-line="120" selection-start-column="37" selection-end-line="120" selection-end-column="37" />
+        <state vertical-scroll-proportion="3.5075989">
+          <caret line="164" column="41" selection-start-line="164" selection-start-column="41" selection-end-line="164" selection-end-column="41" />
           <folding>
             <element signature="e#24#39#0" expanded="true" />
           </folding>

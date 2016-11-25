@@ -10,7 +10,8 @@ from apscheduler.schedulers.background import BackgroundScheduler
 from utils.NetEase import NetEase
 from utils.RedisPool.redis_pool import RedisPool
 from views.user import AccountManagementView
-from config import HOST, PORT, USER, PASSWORD, DATABASE, DB_URL, REDIS_SENTINELS, REDIS_SETTINGS, SOCKET_TIMEOUT
+from config import HOST, PORT, USER, PASSWORD, DATABASE, DB_URL, REDIS_SENTINELS, REDIS_SETTINGS, SOCKET_TIMEOUT, \
+    SCHEDULER_FREQ
 
 
 netease = NetEase()
@@ -161,7 +162,7 @@ class JobProcessor(object):
                         self.conn.commit()
 
                 self.disconnect()
-                time.sleep(10)
+                time.sleep(SCHEDULER_FREQ)
 
             except apscheduler.jobstores.base.JobLookupError as e:
                 logging.error(e.message)
