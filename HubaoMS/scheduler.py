@@ -150,22 +150,26 @@ class JobProcessor(object):
                     # Job to be executed
                     if job["status"] == 0:
                         if job["running"]:
-                            self.scheduler.remove_job(job_id=job["job_id"], jobstore='db_jobstore')
+                            try:
+                                self.scheduler.remove_job(job_id=job["job_id"], jobstore='db_jobstore')
+                            except apscheduler.jobstores.base.JobLookupError as e:
+                                logging.error(e.message)
                         self.process_job(job)
                         self.cur.execute("UPDATE scheduled_jobs SET status=2 WHERE job_id=%s", (job["job_id"],))
                         self.conn.commit()
 
                     # Job to be terminated
                     else:
-                        self.scheduler.remove_job(job_id=job["job_id"], jobstore='db_jobstore')
+                        try:
+                            self.scheduler.remove_job(job_id=job["job_id"], jobstore='db_jobstore')
+                        except apscheduler.jobstores.base.JobLookupError as e:
+                            logging.error(e.message)
                         self.cur.execute("UPDATE scheduled_jobs SET status=3 WHERE job_id=%s", (job["job_id"],))
                         self.conn.commit()
 
                 self.disconnect()
                 time.sleep(SCHEDULER_FREQ)
-
-            except apscheduler.jobstores.base.JobLookupError as e:
-                logging.error(e.message)
+                
             except Exception as e:
                 logging.error(e.message)
 
