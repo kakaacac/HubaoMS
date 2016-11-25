@@ -8,14 +8,9 @@ from string import ascii_lowercase, digits
 
 from base import AuthenticatedModelView
 from utils.formatter import format_broadcast_actions, format_broadcast_range, format_broadcast_status
-from models import Broadcast, RoomTags, Room, db
+from models import Broadcast, RoomTags, Room, db, ScheduledJobs
 from forms import BroadcastEditForm
 from utils.functions import json_response, hash_md5, abs_redirect
-from utils import netease, job_queue
-
-
-def send_broadcast(message, rooms):
-    netease.send_to_chatrooms(rooms, 0, msg=message)
 
 
 class BroadcastView(AuthenticatedModelView):
@@ -71,9 +66,12 @@ class BroadcastView(AuthenticatedModelView):
             broadcast = Broadcast()
             brdcst_id = self.generate_broadcast_id(form.content.data)
             value = [int(v) for v in form.target.data.split(',')] if form.target.data else None
+            # TODO: get rooms on each execution
+            rooms = self.get_chatrooms(form.range.data, value)
+
             kwargs = {
                 "message": form.content.data.encode('utf-8'),
-                "rooms": self.get_chatrooms(form.range.data, value)
+                "rooms": rooms
             }
 
             broadcast.id = brdcst_id
@@ -86,21 +84,21 @@ class BroadcastView(AuthenticatedModelView):
             broadcast.broadcast_interval = form.interval.data
 
             db.session.add(broadcast)
-            db.session.commit()
 
             # Add scheduler job
-            job_queue.put({
-                "action": "add",
-                "func": send_broadcast,
-                "trigger": "interval",
-                "job_kwargs": {
-                    "kwargs": kwargs,
-                    "minutes": form.interval.data,
-                    "start_date": form.start_time.data,
-                    "end_date": form.end_time.data,
-                    "id": brdcst_id
-                }
-            })
+            job = ScheduledJobs()
+            job.job_id = brdcst_id
+            job.job_type = "interval"
+            job.status = 0
+            job.start_time = form.start_time.data
+            job.end_time = form.end_time.data
+            job.job_function = "broadcast"
+            job.job_args = kwargs
+            job.job_interval = form.interval.data
+
+            db.session.add(job)
+
+            db.session.commit()
 
             flash(u"添加广播成功", category="success")
             return abs_redirect(".index_view")
@@ -140,6 +138,7 @@ class BroadcastView(AuthenticatedModelView):
         form = BroadcastEditForm()
         if form.validate_on_submit():
             broadcast = Broadcast.query.get_or_404(id)
+            job = ScheduledJobs.query.get(id)
 
             value = [int(v) for v in form.target.data.split(',')] if form.target.data else None
             kwargs = {
@@ -147,35 +146,20 @@ class BroadcastView(AuthenticatedModelView):
                 "rooms": self.get_chatrooms(form.range.data, value)
             }
 
-            if not broadcast.interrupted:
-                # Remove original job
-                job_queue.put({
-                    "action": "stop",
-                    "id": id
-                })
-            else:
-                broadcast.interrupted = False
-
-            # Add new job
-            job_queue.put({
-                "action": "add",
-                "func": send_broadcast,
-                "trigger": "interval",
-                "job_kwargs": {
-                    "kwargs": kwargs,
-                    "minutes": form.interval.data,
-                    "start_date": form.start_time.data,
-                    "end_date": form.end_time.data,
-                    "id": id
-                }
-            })
-
             broadcast.broadcast_content = form.content.data
             broadcast.start_time = form.start_time.data
             broadcast.end_time = form.end_time.data
             broadcast.broadcast_range = form.range.data
             broadcast.target = form.target.data
             broadcast.broadcast_interval = form.interval.data
+
+            # Modify scheduler job
+            if job.status == 2:
+                job.status = 0
+            job.start_time = form.start_time.data
+            job.end_time = form.end_time.data
+            job.job_args = kwargs
+            job.job_interval = form.interval.data
 
             db.session.commit()
 
@@ -193,10 +177,8 @@ class BroadcastView(AuthenticatedModelView):
             return abs_redirect(".index_view")
         else:
             # Stop job
-            job_queue.put({
-                "action": "stop",
-                "id": id
-            })
+            job = ScheduledJobs.query.get(id)
+            job.status = 1
             broadcast.interrupted = True
             db.session.commit()
             flash(u"停止广播成功", category="success")
@@ -212,25 +194,8 @@ class BroadcastView(AuthenticatedModelView):
             flash(u"广播启动中", category="error")
             return abs_redirect(".index_view")
         else:
-            value = [int(v) for v in broadcast.target.split(',')] if broadcast.target else None
-            kwargs = {
-                "message": broadcast.broadcast_content.encode('utf-8'),
-                "rooms": self.get_chatrooms(broadcast.broadcast_range, value)
-            }
-
-            # Add new job
-            job_queue.put({
-                "action": "add",
-                "func": send_broadcast,
-                "trigger": "interval",
-                "job_kwargs": {
-                    "kwargs": kwargs,
-                    "minutes": broadcast.broadcast_interval,
-                    "start_date": broadcast.start_time,
-                    "end_date": broadcast.end_time,
-                    "id": id
-                }
-            })
+            job = ScheduledJobs.query.get(id)
+            job.status = 0
 
             broadcast.interrupted = False
             db.session.commit()

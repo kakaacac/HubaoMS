@@ -1,9 +1,8 @@
 # -*- coding: utf-8 -*-
 import logging
-import platform
 import os
 from datetime import timedelta
-from flask import Flask, send_from_directory, request, redirect
+from flask import Flask, send_from_directory
 
 from config import USER, PASSWORD, HOST, PORT, DATABASE, SOCKET_TIMEOUT, REDIS_SETTINGS, REDIS_SENTINELS, \
     STATIC_BASE_URL, DEBUG, REMEMBER_DURATION, URL_SCHEME
@@ -11,7 +10,6 @@ from models import db
 from utils.login_manager import login_manager
 from utils import redis, integrated_redis
 from manage import admin, api
-from utils.scheduler import init_scheduler
 
 logging.basicConfig(level=logging.DEBUG if DEBUG else logging.ERROR)
 
@@ -51,11 +49,5 @@ admin.init_app(app)
 api.init_app(app)
 integrated_redis.init_app(app)
 
-if platform.system().lower() != 'windows':
-    init_scheduler()
-
 if __name__ == '__main__':
-    # Start a schedule to execute or eliminate uncompleted jobs
-    if platform.system().lower() == 'windows':
-        init_scheduler()
     app.run(debug=DEBUG, use_reloader=False)

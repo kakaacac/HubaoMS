@@ -230,12 +230,24 @@ class PropsView(AuthenticatedBaseView):
     def props_list(self):
         props = []
         for item in self.load_props_config()["prop_info"]:
-            if int(item["prop_id"]) > 1000:
+            if int(item["prop_id"]) < 1000:
                 currency, value = item["value"].split(":")
                 item.update({"currency": currency, "value":float(value)})
                 props.append(item)
 
         return self.render("content/props_view.html", data=props)
+
+    @expose('/create', methods=['GET',])
+    def props_create_view(self):
+        return "create"
+
+    @expose('/edit/<pid>', methods=['GET',])
+    def props_edit_view(self, pid):
+        return pid
+
+    @expose('/delete/<pid>')
+    def delete_props(self, pid):
+        return pid
 
 
 

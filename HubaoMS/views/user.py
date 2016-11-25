@@ -3,7 +3,8 @@ import json
 import time
 import requests
 from datetime import datetime, timedelta
-import psycopg2
+import random
+from string import ascii_lowercase, digits
 from sqlalchemy.sql import func, not_
 from flask import flash, url_for, request, abort
 from flask_admin import expose
@@ -13,11 +14,11 @@ from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
 from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
     format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status, format_boolean
-from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room, Device
-from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_APP_ID, \
-    HOST, PORT, USER, PASSWORD, DATABASE
+from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room, Device, \
+    ScheduledJobs
+from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_APP_ID
 from utils.functions import is_file_exists, hash_md5, abs_redirect
-from utils import redis, netease, job_queue
+from utils import redis, netease
 
 
 class BaseUserView(BaseRobotToggleView):
@@ -351,47 +352,6 @@ class TaskView(AuthenticatedBaseView):
         flash(u"删除成功", category="success")
         return abs_redirect(".task_list")
 
-# TODO: Should be executed by another program
-def unblock_account_job(uid):
-    conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
-    cur = conn.cursor()
-
-    cur.execute("SELECT uuid, locked, locked_time, rid, room.enable, disable_time FROM users "
-                "INNER JOIN room ON users.uid=room.uid WHERE users.uid=%s;", (uid,))
-    uuid, locked, locked_time, rid, enable, disable_time = cur.fetchone()
-
-    if locked:
-        cur.execute("UPDATE users SET locked=FALSE WHERE uid=%s", (uid,))
-        if not enable and locked_time == disable_time:
-            cur.execute("UPDATE room SET enable=TRUE, control_flag=0 WHERE rid=%s", (rid,))
-            AccountManagementView.control_video_stream(rid, uuid, action=1)
-            redis.master().hdel("control:block:room", rid)
-
-        conn.commit()
-        redis.master().hdel("control:block:account", uuid.replace("-", ""))
-
-        cur.close()
-        conn.close()
-
-
-def unblock_room_job(rid):
-    conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
-    cur = conn.cursor()
-
-    cur.execute("SELECT uuid, enable FROM room inner join users on room.uid=users.uid WHERE rid=%s;", (rid,))
-    uuid, enable = cur.fetchone()
-
-    if not enable:
-        #restore video stream
-        AccountManagementView.control_video_stream(rid, uuid, action=1)
-
-        cur.execute("UPDATE room SET enable=TRUE, control_flag=0 WHERE rid=%s", (rid,))
-        conn.commit()
-        redis.master().hdel("control:block:room", rid)
-
-        cur.close()
-        conn.close()
-
 
 class AccountManagementView(BaseUserView):
     column_auto_select_related = True
@@ -422,6 +382,8 @@ class AccountManagementView(BaseUserView):
         "room_action": format_room_action,
         "room.on_air": format_boolean("room.on_air", true_color="green")
     }
+
+    list_template = "user/account_management.html"
 
     @staticmethod
     def is_robot(user):
@@ -601,26 +563,30 @@ class AccountManagementView(BaseUserView):
             form = DateSelectForm()
             if form.validate_on_submit():
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = now + timedelta(days=block_time)
+                expired_time = now + timedelta(seconds=block_time)
 
                 # Store expiration info at redis
                 redis.master().hset("control:block:account",
                                     user.uuid.replace("-", ""),
                                     expired_time.strftime("%Y-%m-%d %H:%M:%S"))
 
-                # Add scheduler job for unblock
-                job_queue.put({
-                    "action": "add",
-                    "func": unblock_account_job,
-                    "trigger": 'date',
-                    "job_kwargs": {
-                        "args": (uid,),
-                        "coalesce": True,
-                        "misfire_grace_time": 86400,
-                        "id": "block_account_{}".format(uid),
-                        "run_date": expired_time
-                    }
-                })
+                # Add scheduler job
+                kwargs = {
+                    "coalesce": True,
+                    "misfire_grace_time": 86400,
+                    "args": (uid,),
+                }
+                job = ScheduledJobs()
+                job.job_id = self.generate_id(uid)
+                job.job_type = "date"
+                job.status = 0
+                job.start_time = expired_time
+                job.end_time = expired_time
+                job.job_function = "unblock_account"
+                job.job_args = kwargs
+                job.job_interval = 0
+
+                db.session.add(job)
 
                 user.locked = True
                 user.locked_time = now
@@ -665,7 +631,7 @@ class AccountManagementView(BaseUserView):
             if form.validate_on_submit():
                 now = datetime.now()
                 block_time = int(form.custom.data) if form.date.data == "custom" else int(form.date.data)
-                expired_time = now + timedelta(days=block_time)
+                expired_time = now + timedelta(seconds=block_time)
 
                 #cut off video stream
                 self.control_video_stream(rid, room.user.uuid)
@@ -677,7 +643,6 @@ class AccountManagementView(BaseUserView):
                 room.on_air = False
                 room.control_flag = 2
                 room.disable_time = now
-                db.session.commit()
 
                 # send NetEase message
                 self.send_block_room_msg(room.chatroom, 2)
@@ -685,19 +650,24 @@ class AccountManagementView(BaseUserView):
                 # Store expiration info at redis
                 redis.master().hset("control:block:room", rid, expired_time.strftime("%Y-%m-%d %H:%M:%S"))
 
-                # Add scheduler job for unblock
-                job_queue.put({
-                    "action": "add",
-                    "func": unblock_room_job,
-                    "trigger": 'date',
-                    "job_kwargs": {
-                        "args": (rid,),
-                        "coalesce": True,
-                        "misfire_grace_time": 86400,
-                        "id": "block_room_{}".format(rid),
-                        "run_date": expired_time
-                    }
-                })
+                # Add scheduler job
+                kwargs = {
+                    "coalesce": True,
+                    "misfire_grace_time": 86400,
+                    "args": (rid,),
+                }
+                job = ScheduledJobs()
+                job.job_id = self.generate_id(rid)
+                job.job_type = "date"
+                job.status = 0
+                job.start_time = expired_time
+                job.end_time = expired_time
+                job.job_function = "unblock_room"
+                job.job_args = kwargs
+                job.job_interval = 0
+
+                db.session.add(job)
+                db.session.commit()
 
                 flash(u"封停成功", category="success")
                 return abs_redirect("account.index_view", **request.args)
@@ -732,4 +702,10 @@ class AccountManagementView(BaseUserView):
             "sign": sign
         }
         return requests.get(VIDEO_API_DOMAIN, params=payload)
+
+    @staticmethod
+    def generate_id(id):
+        t = str(int(time.time()))
+        r = "".join([random.choice(digits + ascii_lowercase) for _ in range(4)])
+        return hash_md5(t + r + str(id.encode("utf-8")))
 

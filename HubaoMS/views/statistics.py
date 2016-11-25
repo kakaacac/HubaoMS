@@ -580,4 +580,8 @@ class CommonStatView(AuthenticatedModelView):
         "processing_date": lambda v, c, m, n: m.processing_date.strftime("%Y-%m-%d")
     }
 
+    column_descriptions = {
+        "uesr_logined": u"进行过登录操作的设备数"
+    }
+
     list_template = "indexed_thumbnail_list.html"

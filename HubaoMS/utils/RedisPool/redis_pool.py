@@ -17,7 +17,8 @@ class RedisPool(object):
         self.db = db
         self.socket_timeout = socket_timeout
 
-        self.sentinel = None
+        self.sentinel = Sentinel(sentinels, password=password, db=db, socket_timeout=socket_timeout) \
+            if sentinels and password and socket_timeout and db is not None else None
         if app is not None:
             self.init_app(app)
 

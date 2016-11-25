@@ -88,6 +88,10 @@ class QnaEditForm(Form):
     pass
 
 
+class PropsEditForm(Form):
+    hidden = HiddenField()
+
+
 
 
 

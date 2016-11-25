@@ -364,5 +364,16 @@ class Refund(db.Model):
     refund_time = db.Column("send_time", db.DateTime(timezone=False))
 
 
+class ScheduledJobs(db.Model):
+    job_id = db.Column(db.String(128), primary_key=True)
+    job_type = db.Column(db.String(32), nullable=False)
+    status = db.Column(db.Integer, nullable=False)
+    start_time = db.Column(db.DateTime)
+    end_time = db.Column(db.DateTime)
+    job_interval = db.Column(db.Integer)
+    job_args = db.Column(JSON)
+    job_function = db.Column(db.String(128), nullable=False)
+
+
 if __name__ == '__main__':
     pass

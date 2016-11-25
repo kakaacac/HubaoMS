@@ -1,7 +1,7 @@
 {% extends 'base.html' %}
 
 {% block body %}
-    <p><a class="btn btn-primary" href="{{ url_for('.create_task_view') }}">添加道具</a></p>
+    <p><a class="btn btn-primary" href="{{ url_for('.props_create_view') }}">添加道具</a></p>
     <table class="table table-striped table-bordered table-hover">
         <thead>
             <tr>
@@ -21,11 +21,10 @@
             <td><img src="{{ item.img }}"></td>
             <td>{{ item.desc }}</td>
             <td>{% if item.period == -1 %}永不过期{% else %}{{ item.period }}{% endif %}</td>
-            <td>{{ item.value }}{{ '小草' if item.currency == 'vfc' else '骨头' }}</td>
+            <td>{{ item.value }} {{ '小草' if item.currency == 'vfc' else '骨头' }}</td>
             <td>
-                <a class="btn btn-default" href="{{ url_for('.task_edit_view', task_id=row.task_id) }}">修改</a>
-                <br>
-                <a class="btn btn-default delete-btn" href="{{ url_for('.delete_task', task_id=row.task_id) }}">删除</a>
+                <a class="btn btn-default" href="{{ url_for('.props_edit_view', pid=item.prop_id) }}">修改</a>
+                <a class="btn btn-default delete-btn" href="{{ url_for('.delete_props', pid=item.prop_id) }}">删除</a>
             </td>
         </tr>
         {% else %}
