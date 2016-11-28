@@ -14,6 +14,9 @@ from config import HOST, PORT, USER, PASSWORD, DATABASE, DB_URL, REDIS_SENTINELS
     SCHEDULER_FREQ
 
 
+logging.getLogger('apscheduler').setLevel(level=logging.ERROR)
+logging.getLogger('requests').setLevel(level=logging.ERROR)
+
 netease = NetEase()
 redis = RedisPool(sentinels=REDIS_SENTINELS, socket_timeout=SOCKET_TIMEOUT, **REDIS_SETTINGS)
 

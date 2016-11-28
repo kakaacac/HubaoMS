@@ -49,7 +49,7 @@ class NetEase(object):
             'msgType': msg_type
         }
         if msg:
-            payload['attach'] = msg
+            payload['attach'] = msg.encode("utf-8")
         if ext:
             payload['ext'] = json.dumps(ext)
 
