@@ -50,8 +50,9 @@ class LiveShowStatView(AuthenticatedModelView):
 
         shows = LiveStreamHistory.query.\
             join(UserCertification, LiveStreamHistory.uid == UserCertification.uid).\
-            with_entities(UserCertification.nickname, LiveStreamHistory.rid, LiveStreamHistory.start_time,
-                          LiveStreamHistory.close_time, LiveStreamHistory.max_audience,
+            join(AppUser, LiveStreamHistory.uid == AppUser.uid).\
+            with_entities(UserCertification.nickname, AppUser.display_name, LiveStreamHistory.rid,
+                          LiveStreamHistory.start_time, LiveStreamHistory.close_time, LiveStreamHistory.max_audience,
                           LiveStreamHistory.total_audience, LiveStreamHistory.type,
                           LiveStreamHistory.close_time - LiveStreamHistory.start_time).\
             filter(stat.processing_date == func.date(LiveStreamHistory.start_time)).\
@@ -90,18 +91,19 @@ class LiveShowStatView(AuthenticatedModelView):
         zero_duration = timedelta()
 
         data = [{
-            "id": str(item[1]) + str(int(time.mktime(item[2].timetuple()))) + "{:06d}".format(item[2].microsecond),
+            "id": str(item[2]) + str(int(time.mktime(item[3].timetuple()))) + "{:06d}".format(item[3].microsecond),
             "login_name": item[0],
-            "room_id": item[1],
-            "start_time": item[2].strftime("%Y-%m-%d %H:%M:%S"),
-            "end_time": item[3].strftime("%Y-%m-%d %H:%M:%S") if item[3] else u"直播中",
-            "max_audience": item[4] or 0,
-            "total_audience": item[5] or 0,
-            "type": item[6],
-            "duration": (str(item[7] - timedelta(microseconds=item[7].microseconds))
-                         if item[7] > zero_duration else str(zero_duration)) if item[7] else u"直播中",
-            "interactive": item[9] > 0,
-            "income": item[11] or 0
+            "nickname": item[1],
+            "room_id": item[2],
+            "start_time": item[3].strftime("%Y-%m-%d %H:%M:%S"),
+            "end_time": item[4].strftime("%Y-%m-%d %H:%M:%S") if item[4] else u"直播中",
+            "max_audience": item[5] or 0,
+            "total_audience": item[6] or 0,
+            "type": item[7],
+            "duration": (str(item[8] - timedelta(microseconds=item[8].microseconds))
+                         if item[8] > zero_duration else str(zero_duration)) if item[8] else u"直播中",
+            "interactive": item[10] > 0,
+            "income": item[12] or 0
                 } for item in data]
 
         def pager_url(p):
@@ -270,7 +272,8 @@ class GiftStatView(AuthenticatedModelView):
             join(UIDs, ALL.c.uid == UIDs.c.uid).group_by(ALL.c.uid, ALL.c.money_type).subquery("RESULT")
         DATA = db.session.query(RESULT).join(UserCertification, UserCertification.uid == RESULT.c.uid).\
             join(Room, Room.uid == RESULT.c.uid).\
-            add_columns(Room.rid, UserCertification.nickname)
+            join(AppUser, AppUser.uid == RESULT.c.uid).\
+            add_columns(Room.rid, UserCertification.nickname, AppUser.display_name)
 
         count = ALL_UID.count()
 
@@ -279,7 +282,13 @@ class GiftStatView(AuthenticatedModelView):
         data = OrderedDict()
         for item in DATA.all():
             if not data.has_key(item[0]):
-                data[item[0]] = {"vfc": 0, "vcy": 0, "login_name": item[4], "room_id": item[3]}
+                data[item[0]] = {
+                    "vfc": 0,
+                    "vcy": 0,
+                    "login_name": item[4],
+                    "room_id": item[3],
+                    "nickname": item[5]
+                }
             data[item[0]][item[1]] = item[2]
 
         result  = []
@@ -318,7 +327,8 @@ class GiftStatView(AuthenticatedModelView):
             join(UIDs, ALL.c.compere_id == UIDs.c.compere_id).group_by(ALL.c.compere_id, ALL.c.money_type).subquery("RESULT")
         DATA = db.session.query(RESULT).join(UserCertification, UserCertification.uid == RESULT.c.compere_id).\
             join(Room, Room.uid == RESULT.c.compere_id).\
-            add_columns(Room.rid, UserCertification.nickname)
+            join(AppUser, AppUser.uid == RESULT.c.compere_id).\
+            add_columns(Room.rid, UserCertification.nickname, AppUser.display_name)
 
         count = ALL_UID.count()
 
@@ -327,7 +337,13 @@ class GiftStatView(AuthenticatedModelView):
         data = OrderedDict()
         for item in DATA.all():
             if not data.has_key(item[0]):
-                data[item[0]] = {"vfc": 0, "vcy": 0, "login_name": item[4], "room_id": item[3]}
+                data[item[0]] = {
+                    "vfc": 0,
+                    "vcy": 0,
+                    "login_name": item[4],
+                    "room_id": item[3],
+                    "nickname": item[5]
+                }
             data[item[0]][item[1]] = item[2]
 
         result  = []
@@ -361,9 +377,10 @@ class GiftStatView(AuthenticatedModelView):
                                           GiftGiving.prop_id < 1000,
                                           GiftGiving.uid == uid).\
             join(UserCertification, UserCertification.uid == GiftGiving.compere_id).\
+            join(AppUser, AppUser.uid == GiftGiving.compere_id).\
             join(Room, Room.uid == GiftGiving.compere_id).order_by(GiftGiving.send_time).\
-            with_entities(UserCertification.nickname, Room.rid,
-                          GiftGiving.send_time, GiftGiving.currency, GiftGiving.value).\
+            with_entities(UserCertification.nickname, Room.rid, GiftGiving.send_time, GiftGiving.currency,
+                          GiftGiving.value, AppUser.display_name).\
             paginate(page, self.page_size, False)
 
         data = [{
@@ -371,7 +388,8 @@ class GiftStatView(AuthenticatedModelView):
             "room_id": item[1],
             "send_time": item[2].strftime("%H:%M:%S"),
             "currency": item[3],
-            "value": item[4]
+            "value": item[4],
+            "nickname": item[5]
         } for item in records.items]
 
         def pager_url(p):
@@ -399,9 +417,10 @@ class GiftStatView(AuthenticatedModelView):
                                           GiftGiving.prop_id < 1000,
                                           GiftGiving.compere_id == uid).\
             join(UserCertification, UserCertification.uid == GiftGiving.uid).\
+            join(AppUser, AppUser.uid == GiftGiving.uid).\
             join(Room, Room.uid == GiftGiving.uid).order_by(GiftGiving.send_time).\
-            with_entities(UserCertification.nickname, Room.rid,
-                          GiftGiving.send_time, GiftGiving.currency, GiftGiving.value).\
+            with_entities(UserCertification.nickname, Room.rid, GiftGiving.send_time, GiftGiving.currency,
+                          GiftGiving.value, AppUser.display_name).\
             paginate(page, self.page_size, False)
 
         data = [{
@@ -409,7 +428,8 @@ class GiftStatView(AuthenticatedModelView):
             "room_id": item[1],
             "send_time": item[2].strftime("%H:%M:%S"),
             "currency": item[3],
-            "value": item[4]
+            "value": item[4],
+            "nickname": item[5]
         } for item in records.items]
 
         def pager_url(p):
@@ -524,7 +544,7 @@ class InteractiveGameStatView(AuthenticatedBaseView):
             join(AppUser, GameStat.compere_id == AppUser.uuid).\
             join(UserCertification, AppUser.uid == UserCertification.uid).\
             order_by(GameStat.game_start).\
-            add_columns(UserCertification.nickname).paginate(page, self.page_size, False)
+            add_columns(UserCertification.nickname, AppUser.display_name).paginate(page, self.page_size, False)
 
         data = []
         for item in result.items:
@@ -540,7 +560,8 @@ class InteractiveGameStatView(AuthenticatedBaseView):
                 "duration": duration,
                 "consumption": item.GameStat.bet,
                 "compensation": item.GameStat.award + item.GameStat.bet,
-                "game_id": item.GameStat.game_id
+                "game_id": item.GameStat.game_id,
+                "nickname": item.display_name
             })
 
         def pager_url(p):

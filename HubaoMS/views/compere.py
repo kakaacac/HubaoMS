@@ -6,7 +6,7 @@ from flask_admin import expose
 from base import AuthenticatedBaseView, AuthenticatedModelView
 from utils.formatter import format_thumbnail, format_compere_action, prop_name, prop_type, format_receive_value,\
     format_verification_status, format_verification_actions, format_time, format_withdrawal_status,\
-    format_withdrawal_actions, format_withdrawal_amount
+    format_withdrawal_actions, format_withdrawal_amount, format_room_id, format_username
 from models import GiftGiving, db, AppUser, UserCertification, Compere, RoomStat, CompereVerification, WithdrawHistory
 from config import PAGE_SIZE
 from forms import CompereConfigurationForm
@@ -33,7 +33,9 @@ class CompereView(AuthenticatedModelView):
     }
     column_formatters = {
         "image": format_thumbnail("image"),
-        "actions": format_compere_action
+        "actions": format_compere_action,
+        "rid": format_room_id("rid"),
+        "user.cert.nickname": format_username("user.cert.nickname")
     }
 
     list_template = "compere/compere_view.html"

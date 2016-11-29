@@ -13,7 +13,8 @@ from base import AuthenticatedBaseView, AuthenticatedModelView, BaseRobotToggleV
 from forms import TaskEditForm, DateSelectForm
 from utils.html_element import colorize, button
 from utils.formatter import format_thumbnail, format_account_action,format_room_action, format_room_status, \
-    format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status, format_boolean
+    format_user_action, prop_name, prop_type, format_present_value, ts_to_time, format_account_status, format_boolean, \
+    format_room_id
 from models import db, AppUser, UserProperty, Feedback, GiftGiving, WithdrawHistory, Payment, Room, Device, \
     ScheduledJobs
 from config import TASK_CONFIG, PAGE_SIZE, VIDEO_API_KEY, VIDEO_API_DOMAIN, ROBOT_APP_ID
@@ -65,7 +66,8 @@ class UserView(BaseUserView):
                          "sex": lambda v, c, m, n: m.sex.get("sex", "") if m.sex else None,
                          "compere.auth_status": lambda v, c, m, n: u"是" if m.compere and m.compere.auth_status else u"否",
                          "cert.created_time": lambda v, c, m, n: m.cert.created_time.strftime("%Y-%m-%d %H:%M:%S") if m.cert else "",
-                         "actions": format_user_action}
+                         "actions": format_user_action,
+                         "room.rid": format_room_id("room.rid")}
 
     @expose("/gift_giving/<uid>")
     def gift_giving_detail(self, uid):

@@ -231,3 +231,35 @@ def format_gift_stat_detail(role):
              u'title="{}列表"></span>'.format(title),
              url_for("gift_statistics.{}_list".format(role), id=model.id))], btn_class="")
     return f
+
+
+def format_room_id(attr):
+    attr_path = attr.split(".")
+    def f(view, context, model, name):
+        try:
+            room_id = getattr(model, attr_path[0])
+            if len(attr_path) > 1:
+                for a in attr_path[1:]:
+                    room_id = getattr(room_id, a)
+        except AttributeError:
+            return ""
+
+        return Markup(u"<a href=\"{}\" title=\"View room {} info\">{}</a>".
+                      format(url_for("room.index_view", search=room_id), room_id, room_id))
+    return f
+
+
+def format_username(attr):
+    attr_path = attr.split(".")
+    def f(view, context, model, name):
+        try:
+            username = getattr(model, attr_path[0])
+            if len(attr_path) > 1:
+                for a in attr_path[1:]:
+                    username = getattr(username, a)
+        except AttributeError:
+            return ""
+
+        return Markup(u"<a href=\"{}\" title=\"View user {} info\">{}</a>".
+                      format(url_for("user.index_view", search=username), username, username))
+    return f

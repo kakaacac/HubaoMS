@@ -3,7 +3,7 @@ from sqlalchemy.sql import not_
 
 from models import AppUser, Device
 from base import BaseRobotToggleView
-from utils.formatter import format_thumbnail, format_room_channel, format_boolean
+from utils.formatter import format_thumbnail, format_room_channel, format_boolean, format_username
 from config import ROBOT_APP_ID
 
 
@@ -33,7 +33,8 @@ class RoomView(BaseRobotToggleView):
         "channel": format_room_channel,
         "enable": format_boolean("enable"),
         "on_air": format_boolean("on_air", true_color="green"),
-        "created_time": lambda v, c, m, n: m.created_time.strftime("%Y-%m-%d %H:%M:%S")
+        "created_time": lambda v, c, m, n: m.created_time.strftime("%Y-%m-%d %H:%M:%S"),
+        "user.cert.nickname": format_username("user.cert.nickname")
     }
 
     list_template = "robot_toggle_view.html"

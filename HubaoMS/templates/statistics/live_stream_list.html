@@ -8,6 +8,7 @@
     <tr>
         <th>#</th>
         <th>主播登录名</th>
+        <th>昵称</th>
         <th>房间 ID</th>
         <th>类型</th>
         <th>开始时间</th>
@@ -25,6 +26,7 @@
     <tr>
         <td>{{ i }}</td>
         <td>{{ row.login_name }}</td>
+        <td>{{ row.nickname }}</td>
         <td>{{ row.room_id }}</td>
         <td>{% if row.type == 'live' %}普通{% else %}付费{% endif %}{% if row.interactive %}互动{% endif %}</td>
         <td>{{ row.start_time }}</td>
