@@ -12,7 +12,8 @@
         <th>#</th>
         <th>订单号</th>
         <th>流水号</th>
-        <th>时间</th>
+        <th>请求时间</th>
+        <th>完成时间</th>
         <th>状态</th>
         <th>币种</th>
         <th>价钱</th>
@@ -28,9 +29,10 @@
     <tr>
         <td>{{ i }}</td>
         <td>{{ row.order_id }}</td>
-        <td>{{ row.trans_id }}</td>
-        <td>{{ row.complete_time.strftime("%Y-%m-%d %H:%M:%S") }}</td>
-        <td>{{ '成功' if row.success else '失败' }}</td>
+        <td>{% if row.completed %}{{ row.trans_id }}{% endif %}</td>
+        <td>{{ row.order_time }}</td>
+        <td>{% if row.completed %}{{ row.complete_time.strftime("%Y-%m-%d %H:%M:%S") }}{% else %}未完成{% endif %}</td>
+        <td>{% if row.completed %}{{ '成功' if row.success else '失败' }}{% else %}等待支付{% endif %}</td>
         <td>{{ '人民币' if row.currency.lower() == "rmb" else row.currency }}</td>
         <td>{{ row.money }}</td>
         <td>{{ row.vfc_increment }}</td>

@@ -99,7 +99,8 @@ class UserView(BaseUserView):
             return url_for(".recharge_detail", page=p+1, uid=uid)
 
         page = int(request.args.get("page", 1))
-        payments = Payment.query.filter_by(user=AppUser.query.get_or_404(uid)).paginate(page, PAGE_SIZE, False)
+        payments = Payment.query.filter_by(user=AppUser.query.get_or_404(uid)).order_by(Payment.order_time).\
+            paginate(page, PAGE_SIZE, False)
 
         kwargs = {
             "uid": uid,

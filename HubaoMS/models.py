@@ -229,6 +229,8 @@ class Payment(db.Model):
     pay_type = db.Column(db.String(64))
     vcy_increment = db.Column(db.Float)
     vfc_increment = db.Column(db.Float)
+    order_time = db.Column(db.DateTime(timezone=False))
+    completed = db.Column(db.Boolean)
 
 
 class CompereVerification(db.Model):

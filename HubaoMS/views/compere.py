@@ -1,5 +1,6 @@
 # -*- coding: utf-8 -*-
 import time
+from sqlalchemy.sql import expression
 from flask import flash, url_for, request
 from flask_admin import expose
 
@@ -53,6 +54,7 @@ class CompereView(AuthenticatedModelView):
             with_entities(GiftGiving.id, UserCertification.nickname, AppUser.display_name,
                           GiftGiving.prop_id, GiftGiving.qty, GiftGiving.value, GiftGiving.currency,
                           GiftGiving.send_time).\
+            order_by(expression.desc(GiftGiving.send_time)).\
             paginate(page, PAGE_SIZE, False)
 
         kwargs = {
