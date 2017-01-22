@@ -65,13 +65,15 @@ if __name__ == '__main__':
     # sys.path.append("")
     # print sys.path
     # import random
+    import logging
+    logging.getLogger('requests').setLevel(level=logging.ERROR)
     from config import HOST, PORT, USER, PASSWORD, DATABASE
     import psycopg2
     net = NetEase()
 
-    # conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
+    conn = psycopg2.connect(host=HOST, port=PORT, user=USER, password=PASSWORD, database=DATABASE)
     # conn = psycopg2.connect(host="10.116.108.164", port=5432, user="postgres", password="L4K3J4Y72yLy", database="hubao_tv_db")
-    # cur = conn.cursor()
+    cur = conn.cursor()
     # cur.execute("select username from chat_account c left join users u on c.id=replace(u.uuid::\"varchar\", '-', '') where uuid is null")
     # print len(cur.fetchall())
 
@@ -81,6 +83,20 @@ if __name__ == '__main__':
     #         print r.content
     # net = NetEase()
     # print requests.post("https://api.netease.im/nimserver/user/updateUinfo.action", data=urlencode({"accid":"system", "name":u"系统广播".encode("utf-8")}), headers=net.generate_header()).content
-    # print requests.post("https://api.netease.im/nimserver/user/getUinfos.action", data=urlencode({"accids":["system"]}), headers=net.generate_header()).content
+    print requests.post("https://api.netease.im/nimserver/user/getUinfos.action", data=urlencode({"accids":["bc059eb84ff6fa2b43430143aa8ffebe"]}), headers=net.generate_header()).content
+
+    # cur.execute("select username, avatar from users u inner join chat_account c on c.id=replace(u.uuid::\"varchar\", '-', '') where avatar != ''")
+    # fail = 0
+    # success = 0
+    # for i, row in enumerate(cur.fetchall()):
+    #     r = requests.post("https://api.netease.im/nimserver/user/updateUinfo.action", data=urlencode({"accid":row[0], "icon":row[1]}), headers=net.generate_header())
+    #     if r.status_code != 200:
+    #         fail += 1
+    #         print "{} -- Updating user {} failed. Count: {}".format(i + 1, row[0], fail)
+    #     else:
+    #         success += 1
+    #         print "{} -- Successfully updated user {}. Count: {}".format(i + 1, row[0], success)
+    #
+    # print "Done. Success: {}. Failed: {}".format(success, fail)
     pass
 
